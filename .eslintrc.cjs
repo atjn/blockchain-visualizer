@@ -7,6 +7,9 @@
 
 module.exports = {
 
+  parserOptions: {
+    sourceType: "module",
+  },
 	extends: [
 		"@atjn/eslint-config",
 	],
