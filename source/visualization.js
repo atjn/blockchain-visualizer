@@ -6,49 +6,52 @@
 
 //This is just temporary until we have a working user interface.
 globalThis.settings = {
-	algorithm = "Bitcoin",
-	nodesCount = 10,
-}
-class Packet {
+	algorithm: "Bitcoin",
+	nodesCount: 10,
+};
+class Packet{
 	to;
 	from;
-};
-class NodeAddresses extends Packet {
+}
+class NodeAddresses extends Packet{
 	addresses = [];
-};
+}
 
-events =
+const events =
 [
 	{
 		timestamp: Date.now(),
 		run: addNodes,
-	}
-]
+	},
+];
 
-nodes = new Map();
+const nodes = new Map();
 
+/**
+ *
+ */
 function addNodes(){
-	this.firstNodes ?? [];
+	this.firstNodes ??= [];
 
 	if(this.firstNodes.length === 0){
 		while(nodes.size() < Math.min(5, globalThis.settings.nodesCount)){
 			const id = Symbol();
 			this.firstNodes.push(id);
-			map.set(id, new Node());
+			nodes.set(id, new Node());
 		}
 		for(const node of this.firstNodes){
 			const nodeAddresses = new NodeAddresses;
 			nodeAddresses.addresses.push(...this.firstNodes);
-			node.process(nodeAddresses)
+			node.process(nodeAddresses);
 		}
 	}else{
 		const initialNodesCount = this.firstNodes.length;
-		while(node.size() < Math.min(initialNodesCount + 5, globalThis.settings.nodesCount)){
+		while(nodes.size() < Math.min(initialNodesCount + 5, globalThis.settings.nodesCount)){
 			const node = new Node();
-			map.set(Symbol(), node);
+			nodes.set(Symbol(), node);
 			const nodeAddresses = new NodeAddresses;
 			nodeAddresses.addresses.push(...this.firstNodes);
-			node.process(nodeAddresses)
+			node.process(nodeAddresses);
 		}
 	}
 
@@ -56,8 +59,8 @@ function addNodes(){
 		events.push({
 			timestamp: Date.now() + 2000,
 			run: addNodes,
-			with: {firstNodes = [...this.firstNodes]}
-		})
+			with: {firstNodes: [...this.firstNodes]},
+		});
 	}
 
 }
