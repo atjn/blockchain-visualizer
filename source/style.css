@@ -1,4 +1,45 @@
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Arial", sans-serif;
+	background: #2B2B2B;
+	color: white;
+}
 
-html {
-	background: black;
+#visualizer {
+	margin: 20px;
+	height: calc(100vh - 40px);
+}
+
+#visualizer > div:not(:last-child) {
+	margin-bottom: calc(5vh - 20px);
+}
+
+#nodes {
+	background-color: red;
+	height: 55vh;
+}
+
+#blockchain {
+	background-color: green;
+	height: 25vh;
+}
+
+#controls {
+	background-color: blue;
+	height: 10vh;
+}
+
+#description {
+	background-color: #3B3B3B;
+	text-align: justify;
+	padding: 20px 20vw;
+}
+
+footer {
+	background-color: #4B4B4B;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100px;
 }
