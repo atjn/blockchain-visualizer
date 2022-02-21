@@ -8,8 +8,8 @@
     "lint:js": "eslint \"**/*.js\" --fix",
     "lint:css": "stylelint \"source/**/*.css\" --fix",
     "lint:html": "html-validate \"source/**/*.html\"",
-    "lint": "npm run lint:js && npm run lint:css",
-    "test": "tap"
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
+    "test": "npm install && npm run lint"
   },
   "repository": {
     "type": "git",
