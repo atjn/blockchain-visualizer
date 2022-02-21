@@ -1,0 +1,26 @@
+{
+	"lang": "da",
+	"name": "Timewarp",
+	"short_name": "Timewarp",
+	"icons": [
+		{
+			"src": "/images/logo_192.png",
+			"type": "image/png",
+			"sizes": "192x192"
+		},
+		{
+			"src": "/images/logo_512.png",
+			"type": "image/png",
+			"sizes": "512x512"
+		},
+		{
+			"src": "/images/logo.svg",
+			"type": "image/svg+xml",
+			"sizes": "any"
+		}
+	],
+	"start_url": "/index.html",
+	"display": "standalone",
+	"theme_color": "#442939",
+	"background_color": "#171717"
+}

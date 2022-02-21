@@ -1,0 +1,37 @@
+{
+  "name": "blockchain-visualizer",
+  "version": "1.0.0",
+  "description": "TODO",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "lint:js": "eslint \"**/*.js\" --fix",
+    "lint:css": "stylelint \"source/**/*.css\" --fix",
+    "lint:html": "html-validate \"source/**/*.html\"",
+    "lint": "npm run lint:js && npm run lint:css",
+    "test": "tap"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atjn/blockchain-visualizer.git"
+  },
+  "keywords": [
+    "blockchain",
+    "p2p",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/atjn/blockchain-visualizer/issues"
+  },
+  "homepage": "https://github.com/atjn/blockchain-visualizer#readme",
+  "devDependencies": {
+    "@atjn/eslint-config": "^4.1.0",
+    "@atjn/stylelint-config": "^2.0.0",
+    "@atjn/htmlvalidate-config": "^3.0.0",
+    "eslint": "^8.9.0",
+    "stylelint": "^14.5.1",
+    "html-validate": "^6.4.0"
+  }
+}

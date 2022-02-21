@@ -1,1 +1,1 @@
-# blockchain-visualizer
+# Blockchain Visualizer
