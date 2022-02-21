@@ -43,7 +43,7 @@ function addNodes(){
 		}
 	}else{
 		const initialNodesCount = this.firstNodes.length;
-		while(node.size() < initialNodesCount + 5){
+		while(node.size() < Math.min(initialNodesCount + 5, globalThis.settings.nodesCount)){
 			const node = new Node();
 			map.set(Symbol(), node);
 			const nodeAddresses = new NodeAddresses;
