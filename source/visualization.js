@@ -56,7 +56,7 @@ function addNodes(){
 			node.receive = nodeAddresses;
 		}
 	}else{
-		const initialNodesCount = nodes.length;
+		const initialNodesCount = nodes.size;
 		while(nodes.size < Math.min(initialNodesCount + 5, globalThis.settings.nodesCount)){
 			const node = new algorithm.Node();
 			nodes.set(Symbol(), node);
