@@ -6,7 +6,7 @@ export const description = " ";
 export class Node{
 	set receive(packet){
 		//todo fix it
-		this.nodeAdresses.push(...packet.nodeAddresses);
+		this.nodeAddresses.push(...(packet.addresses || []));
 	}
 	nodeAddresses = [];
 }
