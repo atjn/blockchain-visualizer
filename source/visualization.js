@@ -9,6 +9,10 @@ globalThis.settings = {
 	algorithm: "Bitcoin",
 	nodesCount: 10,
 };
+class Event{
+	timestamp;
+}
+
 class Packet{
 	to;
 	from;
@@ -19,11 +23,14 @@ class NodeAddresses extends Packet{
 
 const events =
 [
-	{
+	new Event({
 		timestamp: Date.now(),
 		run: addNodes,
-	},
+	}),
 ];
+
+let play = true;
+setTimeout(() => {play = false;}, 10000);
 
 const nodes = new Map();
 
@@ -42,7 +49,7 @@ function addNodes(){
 		for(const node of this.firstNodes){
 			const nodeAddresses = new NodeAddresses;
 			nodeAddresses.addresses.push(...this.firstNodes);
-			node.process(nodeAddresses);
+			node.receive(nodeAddresses);
 		}
 	}else{
 		const initialNodesCount = this.firstNodes.length;
@@ -51,16 +58,35 @@ function addNodes(){
 			nodes.set(Symbol(), node);
 			const nodeAddresses = new NodeAddresses;
 			nodeAddresses.addresses.push(...this.firstNodes);
-			node.process(nodeAddresses);
+			node.receive(nodeAddresses);
 		}
 	}
 
 	if(nodes.size() < globalThis.settings.nodesCount){
-		events.push({
+		events.push(new Event({
 			timestamp: Date.now() + 2000,
 			run: addNodes,
 			with: {firstNodes: [...this.firstNodes]},
-		});
+		}));
 	}
-
 }
+
+/**
+ *
+ */
+function runEvents(){
+	for(const event of events){
+		if(event.timestamp <= Date.now()){
+			event.run.call(event.with || {});
+		}
+	}
+	if(play){
+		 setTimeout(runEvents, 1000);
+	}else{
+		for(const node of nodes.values()){
+			console.log(node);
+		}
+	}
+}
+
+runEvents();
