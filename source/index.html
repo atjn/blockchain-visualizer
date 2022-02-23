@@ -20,7 +20,19 @@
 			<div id="visualizer">
 				<div id="nodes"></div>
 				<div id="blockchain"></div>
-				<div id="controls"></div>
+				<div id="controls">
+					<label for="algorithms">Verification:</label>
+					<select name="algorithms" id="algorithms">
+						<option value="bitcoin">Bitcoin</option>
+						<option value="prebencoin">PrebenCoin</option>
+					</select>
+					<label for="attackers">Attackers:</label>
+					<input type="range" value="50" min="0" max="100" name="attackers" id="attackers" oninput="this.nextElementSibling.value = this.value + '%'">
+					<output>50%</output>
+					<label for="time">Time:</label>
+					<input type="range" min="0.5" max="2" step="0.1" name="time" id="time" oninput="this.nextElementSibling.value = this.value + 'x'">
+					<output>1x</output>
+				</div>
 			</div>
 			<div id="description">
 				<h1>
