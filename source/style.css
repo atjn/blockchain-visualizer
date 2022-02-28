@@ -15,7 +15,7 @@ body {
 	margin-bottom: calc(5vh - 20px);
 }
 
-#nodes {
+#network-visualization {
 	background-color: red;
 	height: 55vh;
 }

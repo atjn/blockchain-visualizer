@@ -1,3 +1,8 @@
+/**
+ * @file
+ * This is the Bitcoin file.
+ */
+
 export const description = " ";
 
 /**

@@ -3,6 +3,8 @@
  * This is the main script file.
  */
 
+const simulation = new Worker("simulation.js");
+
 globalThis.data = {};
 
 const allInputs = {
@@ -18,6 +20,12 @@ const allInputs = {
 				],
 				default: "Bitcoin",
 			},
+			nodes: {
+				type: "range",
+				min: 5,
+				max: 100,
+				default: 20,
+			}
 		},
 	},
 	attackers: {
@@ -90,7 +98,7 @@ function generateInputs(inputData, parent){
 				range.type = data.type;
 				range.name = name;
 				range.id = name;
-				range.dataset.unit = data.unit;
+				range.dataset.unit = data.unit || "";
 
 				for (const key of ["min", "max", "step"]) {
 					if (data[key]) range[key] = data[key];
@@ -143,3 +151,9 @@ function generateInputs(inputData, parent){
 		});
 	}
 }
+
+const playButton = document.getElementById("play");
+
+playButton.addEventListener("click", () => {
+	simulation.postMessage({ message: "start", settings: data });
+});
