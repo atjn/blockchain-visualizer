@@ -178,7 +178,7 @@ class AddressPacket extends Packet{
  *
  * This specific implementation of a number generator is called mulberry32.
  *
- * @param {Number} max - The maximum number allowed. (the minimum is always 0)
+ * @param {number} max - The maximum number allowed. (the minimum is always 0).
  * @returns {number} - A random number between 0 and {max}.
  */
 function random(max = 1){
@@ -245,36 +245,38 @@ function newAddress(){
 }
 
 /**
- * @param {Object} root0
- * @param {Number} root0.x
- * @param {Number} root0.y
- * @param {Object} root1
- * @param {Number} root1.x
- * @param {Number} root1.y
+ * @param {object} root0
+ * @param {number} root0.x
+ * @param {number} root0.y
+ * @param {object} root1
+ * @param {number} root1.x
+ * @param {number} root1.y
+ * @param useBoxRatio
  */
 function distance({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
 	if(useBoxRatio){
 		return (Math.sqrt(
 			((x1 - x2) ** 2) +
-			((y1 - y2) ** 2)
+			((y1 - y2) ** 2),
 		) / globalThis.settings.networkBoxRatio);
 	}else{
 		return Math.sqrt(
 			((x1 - x2) ** 2) +
-			((y1 - y2) ** 2)
+			((y1 - y2) ** 2),
 		);
 	}
 }
 
 /**
- * @param {Object} root0
- * @param {Number} root0.x
- * @param {Number} root0.y
- * @param {Object} root1
- * @param {Number} root1.x
- * @param {Number} root1.y
+ * @param {object} root0
+ * @param {number} root0.x
+ * @param {number} root0.y
+ * @param {object} root1
+ * @param {number} root1.x
+ * @param {number} root1.y
+ * @param useBoxRatio
  */
- function middle({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
+function middle({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
 	if(useBoxRatio){
 		return {
 			x: ((x1 + x2) / 2) / globalThis.settings.networkBoxRatio,
@@ -289,14 +291,14 @@ function distance({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
 }
 
 /**
- * @param {Object} root0
- * @param {Number} root0.x
- * @param {Number} root0.y
- * @param {Object} root1
- * @param {Number} root1.x
- * @param {Number} root1.y
+ * @param {object} root0
+ * @param {number} root0.x
+ * @param {number} root0.y
+ * @param {object} root1
+ * @param {number} root1.x
+ * @param {number} root1.y
  */
- function slope({x: x1, y: y1}, {x: x2, y: y2}){
+function slope({x: x1, y: y1}, {x: x2, y: y2}){
 	const slopeFraction = (y1 - y2) / (x1 - x2);
 	//Now convert from fraction to degrees
 	return Math.atan(slopeFraction) * (180 / Math.PI);

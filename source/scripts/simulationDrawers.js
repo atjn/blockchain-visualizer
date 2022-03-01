@@ -15,8 +15,8 @@ export class EventDrawer{
 				if(event.active){
 					const node = document.createElement("div");
 					node.classList.add("node");
-					node.style.top = `${event.position.y*100}%`;
-					node.style.left = `${(event.position.x / globalThis.settings.networkBoxRatio)*100}%`;
+					node.style.top = `${event.position.y * 100}%`;
+					node.style.left = `${(event.position.x / globalThis.settings.networkBoxRatio) * 100}%`;
 
 					this.#networkBox.appendChild(node);
 					this.#nodes.set(event.address, node);
@@ -30,9 +30,9 @@ export class EventDrawer{
 				if(event.active){
 					const connection = document.createElement("div");
 					connection.classList.add("connection");
-					connection.style.top = `${event.position.y*100}%`;
-					connection.style.left = `${event.position.x*100}%`;
-					connection.style.setProperty("--length", `${event.length*100}%`);
+					connection.style.top = `${event.position.y * 100}%`;
+					connection.style.left = `${event.position.x * 100}%`;
+					connection.style.setProperty("--length", `${event.length * 100}%`);
 					connection.style.transform = `rotate(${event.slope}deg)`;
 
 					this.#networkBox.appendChild(connection);

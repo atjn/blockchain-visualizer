@@ -3,8 +3,8 @@
  * This is the main script file.
  */
 
-import { Simulation, SimulationTime, EventDispatcher } from "./simulationHandlers.js"
-import { EventDrawer } from "./simulationDrawers.js"
+import { Simulation, SimulationTime, EventDispatcher } from "./simulationHandlers.js";
+import { EventDrawer } from "./simulationDrawers.js";
 
 globalThis.settings = {};
 
@@ -175,7 +175,7 @@ globalThis.eventDrawer = new EventDrawer();
 /**
  *
  */
- function resetSimulation(){
+function resetSimulation(){
 	globalThis.simulation?.terminate();
 	globalThis.events = [];
 	globalThis.simulationTime.reset();
@@ -206,6 +206,9 @@ playButton.addEventListener("click", event => {
 	button.classList.toggle("paused");
 });
 
+/**
+ *
+ */
 async function updateNetworkBoxSize(){
 	const visualization = document.querySelector("#visualizer .network");
 	globalThis.settings.networkBoxRatio =  visualization.clientWidth / visualization.clientHeight;

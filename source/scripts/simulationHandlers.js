@@ -99,7 +99,7 @@ export class EventDispatcher{
 		}
 
 		if(event){
-			setTimeout(() => {globalThis.eventDispatcher.poke()}, (event.timestamp - globalThis.simulationTime.now) + 1);
+			setTimeout(() => {globalThis.eventDispatcher.poke();}, (event.timestamp - globalThis.simulationTime.now) + 1);
 		}
 
 		this.#running = false;

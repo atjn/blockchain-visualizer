@@ -10,7 +10,6 @@ export const description = " ";
  * @param event
  */
 onmessage = event => {
-	const packet = event.data.packet;
 	const storage = event.data.storage;
 
 	//Does nothing. No connections are made :P
