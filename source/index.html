@@ -13,16 +13,16 @@
 		<link rel="icon" href="images/logo.png">
 		<link rel="manifest" href="manifest.json">
 		<link rel="stylesheet" href="style.css">
-		<script src="script.js" defer></script>
+		<script src="scripts/ui.js" type="module" defer></script>
 	</head>
 	<body>
 		<main>
 			<div id="visualizer">
-				<div id="network-visualization"></div>
-				<div id="blockchain"></div>
-				<div id="controls">
-					<button type="button" id="play">Play</button>
-				</div>
+				<div class="network"></div>
+				<div class="blockchain"></div>
+			</div>
+			<div id="controls">
+				<button type="button" id="play" class="paused">Play</button>
 			</div>
 			<div id="description">
 				<h1>

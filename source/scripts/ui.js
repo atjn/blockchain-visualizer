@@ -3,9 +3,10 @@
  * This is the main script file.
  */
 
-const simulation = new Worker("simulation.js");
+import { Simulation, SimulationTime, EventDispatcher } from "./simulationHandlers.js"
+import { EventDrawer } from "./simulationDrawers.js"
 
-globalThis.data = {};
+globalThis.settings = {};
 
 const allInputs = {
 	network: {
@@ -25,8 +26,22 @@ const allInputs = {
 				min: 5,
 				max: 100,
 				default: 20,
-			}
+			},
+			speed: {
+				type: "range",
+				min: 500,
+				max: 5000,
+				default: 1000,
+				unit: "ms",
+			},
 		},
+	},
+	seed: {
+		type: "range",
+		min: 1,
+		max: 10000,
+		step: 1,
+		default: Math.random() * 10000,
 	},
 	attackers: {
 		type: "range",
@@ -44,8 +59,6 @@ const allInputs = {
 		default: 1,
 	},
 };
-
-generateInputs(allInputs, document.getElementById("controls"));
 
 /**.
  *
@@ -137,23 +150,67 @@ function generateInputs(inputData, parent){
 
 			scopes.reverse();
 
-			let objectScope = globalThis.data;
+			let settingsScope = globalThis.settings;
 			for (const scope of scopes) {
-				objectScope[scope] ??= {};
-				objectScope = objectScope[scope];
+				settingsScope[scope] ??= {};
+				settingsScope = settingsScope[scope];
 			}
 
-			objectScope[e.target.name] = e.target.value;
+			settingsScope[e.target.name] = e.target.value;
 
 			if (e.target.nextElementSibling?.tagName === "OUTPUT") {
 				e.target.nextElementSibling.value = e.target.value + e.target.dataset.unit;
 			}
+
+			resetSimulation();
 		});
 	}
 }
 
+globalThis.eventDispatcher = new EventDispatcher();
+globalThis.simulationTime = new SimulationTime();
+globalThis.eventDrawer = new EventDrawer();
+
+
+/**
+ *
+ */
+ function resetSimulation(){
+	globalThis.simulation?.terminate();
+	globalThis.events = [];
+	globalThis.simulationTime.reset();
+	globalThis.eventDispatcher.reset();
+
+	document.querySelector("#visualizer .network").innerHTML = "";
+	document.querySelector("#visualizer .blockchain").innerHTML = "";
+
+	const playButton = document.getElementById("play");
+	playButton.innerHTML = "Play";
+	playButton.classList.add("paused");
+
+	globalThis.simulation = new Simulation();
+}
+
+
 const playButton = document.getElementById("play");
 
-playButton.addEventListener("click", () => {
-	simulation.postMessage({ message: "start", settings: data });
+playButton.addEventListener("click", event => {
+	const button = event.target;
+	if(button.classList.contains("paused")){
+		globalThis.simulationTime.resume();
+		button.innerHTML = "Pause";
+	}else{
+		globalThis.simulationTime.pause();
+		button.innerHTML = "Play";
+	}
+	button.classList.toggle("paused");
 });
+
+async function updateNetworkBoxSize(){
+	const visualization = document.querySelector("#visualizer .network");
+	globalThis.settings.networkBoxRatio =  visualization.clientWidth / visualization.clientHeight;
+}
+window.addEventListener("resize", updateNetworkBoxSize);
+updateNetworkBoxSize();
+
+generateInputs(allInputs, document.getElementById("controls"));
