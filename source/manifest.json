@@ -1,7 +1,7 @@
 {
-	"lang": "da",
-	"name": "Timewarp",
-	"short_name": "Timewarp",
+	"lang": "en-US",
+	"name": "Blockchain Visualizer",
+	"short_name": "Blockchain Visualizer",
 	"icons": [
 		{
 			"src": "/images/logo_192.png",

@@ -3,11 +3,11 @@
  * This is the PrebenCoin file.
  */
 
-export const description = " ";
+//export const description = " ";
 
 /**
- * @param state
- * @param event
+ *
+ * @param {object} event
  */
 onmessage = event => {
 	const storage = event.data.storage;
