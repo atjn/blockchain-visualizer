@@ -4,8 +4,7 @@
  * All of the underlying simulation functionality of the app is imported into this file from other files.
  */
 
-import { Simulation, SimulationTime, EventDispatcher } from "./simulationHandlers.js";
-import { EventDrawer } from "./simulationDrawers.js";
+import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simulationHandlers.js";
 
 /**.
  * This is a JSON representation of all the different inputs that the simulation requires.

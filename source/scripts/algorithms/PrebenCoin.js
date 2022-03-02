@@ -1,13 +1,16 @@
 /**
  * @file
- * This is the PrebenCoin file.
+ * This is a temporary algorithm used for testing.
  */
 
-//export const description = " ";
-
 /**
+ * Takes a special input object with the node's local storage, along with a new
+ * data packet that it should process.
+ * Then posts a return message with a special object with the local storage again
+ * (with possible changes made based on the data packet), and a list of new data
+ * packets to send to other nodes.
  *
- * @param {object} event
+ * @param {object} event - The message event sent from the simulation.
  */
 onmessage = event => {
 	const storage = event.data.storage;

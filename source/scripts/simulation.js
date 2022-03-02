@@ -371,26 +371,30 @@ class AddressPacket extends Packet{
  *
  * Nodes are not all added instantaneously, because it makes much more
  * sense to slowly add them and see how the network handles the new structure.
+ *
+ * Therefore, this function is designed to be called and run several times,
+ * and the first time it runs, it runs a completely different code path.
  */
 async function addNodes(){
 
-	// These will be undefined only the first time it is called
+	// These will be undefined only the first time the function is called
 	this.firstNodes ??= [];
 	this.timestamp ??= 0;
 
 	if (this.firstNodes.length === 0) {
-		// Run when there are no nodes add at all yet. Establish 5 central nodes that other nodes have hardcoded addresses to.
+		// Run when there are no nodes add at all yet. Establish 5 central nodes that other nodes have hardcoded addresses to (`firstNodes`).
 		while (globalThis.nodes.size < Math.min(5, globalThis.settings.network.nodes)) {
 			const address = newAddress();
 			this.firstNodes.push(address);
 			globalThis.nodes.set(address, new NodeStorage(), this.timestamp);
 		}
+		// Give the 5 nodes each other's addresses
 		for(const nodeAddress of this.firstNodes) {
 			const addressPacket = new AddressPacket(nodeAddress, nodeAddress, this.firstNodes);
 			globalThis.eventQueue.enqueue(new NodeEvent(addressPacket, this.timestamp));
 		}
 	} else {
-		// Run to add more nodes procedurally.
+		// Run when there are already some nodes, to add more nodes procedurally.
 		const initialNodesCount = globalThis.nodes.size;
 		while (globalThis.nodes.size < Math.min(initialNodesCount + 5, globalThis.settings.network.nodes)) {
 			const address = newAddress();
@@ -430,14 +434,14 @@ function newAddress(){
 }
 
 /**
- * Outputs a random number between 0 and {max} generated from the global seed.
+ * Outputs a random number between 0 and `max` generated from the global seed.
  * If the same seed is used between runs, the generator will always produce the exact same sequence of "random" values.
  *
  * This specific implementation of a number generator is called mulberry32.
  *
  * @param {number} max - The maximum number allowed. (the minimum is always 0).
  *
- * @returns {number} - A random number between 0 and {max}.
+ * @returns {number} - A random number between 0 and `max`.
  */
 function random(max = 1){
 	globalThis.rs ??= globalThis.settings.seed;
