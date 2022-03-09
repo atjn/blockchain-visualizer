@@ -31,7 +31,7 @@ body {
 
 #visualizer .network {
 	height: 70%;
-	background-color: red;
+	background-color: rgb(214, 130, 130);
 }
 
 #visualizer .network * {
