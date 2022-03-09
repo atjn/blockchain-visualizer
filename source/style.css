@@ -11,10 +11,11 @@
 body {
 	margin: 0;
 	padding: 0;
-	font-family: "Arial", sans-serif;
+	font-family: 'Inconsolata', monospace;
 	background: #2B2B2B;
 	color: white;
 }
+
 
 #visualizer {
 	position: absolute;
