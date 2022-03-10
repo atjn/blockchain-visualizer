@@ -1,21 +1,52 @@
+* {
+	box-sizing: border-box;
+	font-family: 'Space Mono', monospace;
+
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
 body {
 	margin: 0;
 	padding: 0;
-	font-family: "Arial", sans-serif;
-	background: #2B2B2B;
-	color: white;
+	background: #1a1a1a;
+	color: rgb(228, 228, 228);
 }
 
+
+header {
+	font-size: 7vh;
+	width: 100%;
+	text-align: center;
+}
+
+p.front {
+	width: 100%;
+	text-align: justify;
+	padding-left: 20vw;
+	padding-right: 20vw;
+}
+
+
+
+#description h1{
+	text-align: center;
+}
+
+
+
 #visualizer {
-	position: absolute;
+	position: relative;
+	margin-top: 1vh;
 	top: 2vh;
 	height: 96vh;
 	left: 2%;
 	width: 96%;
 }
 
+
 #visualizer + * {
-	margin-top: 100vh;
+	margin-top: 1vh;
 }
 
 #visualizer > div {
@@ -27,7 +58,7 @@ body {
 
 #visualizer .network {
 	height: 70%;
-	background-color: red;
+	background-color: rgba(129, 129, 129, 0.185);
 }
 
 #visualizer .network * {
@@ -35,44 +66,51 @@ body {
 }
 
 #visualizer .network .node {
-	--size: 3vh;
+	--size: 2.5vh;
 	width: var(--size);
 	height: var(--size);
 	margin-left: calc(var(--size) / -2);
 	margin-top: calc(var(--size) / -2);
 	border-radius: 10vw;
-	background-color: yellow;
+	background-color: rgb(255, 217, 0);
 	z-index: 100;
 }
 
+
 #visualizer .network .connection {
-	--thickness: .5vh;
+	--thickness: .4vh;
 	height: var(--thickness);
 	width: var(--length);
 	margin-left: calc(var(--length) / -2);
 	margin-top: calc(var(--thickness) / -2);
 	border-radius: 10vw;
-	background-color: blue;
+	background-color: rgb(167, 167, 167);
 	opacity: .5;
 	z-index: 50;
 	transition: opacity .5s ease-out;
 }
 
+
+
+
+
+
+
+
 #visualizer .blockchain {
 	top: 72%;
-	height: 28%;
+	height: 25vh;
 	background-color: green;
 }
 
+
+
+
+
 #controls {
 	background-color: blue;
-	height: 10vh;
-}
-
-#description {
-	background-color: #3B3B3B;
-	text-align: justify;
-	padding: 20px 20vw;
+	height: 13vh;
+	padding: 1vh;
 }
 
 footer {
