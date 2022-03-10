@@ -50,6 +50,8 @@ p.fronttop {
 }
 
 #visualizer > div {
+	border: 1px solid #73ff67;
+
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -108,7 +110,8 @@ p.fronttop {
 
 
 #controls {
-	background-color: blue;
+	background-color: rgba(197, 197, 197, 0.158);
+	border: 1px solid #ffffff;
 	height: 13vh;
 	padding: 1vh;
 }
