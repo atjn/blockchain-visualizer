@@ -9,10 +9,10 @@
 body {
 	margin: 0;
 	padding: 0;
+	border: 0;
 	background: #1a1a1a;
 	color: rgb(228, 228, 228);
 }
-
 
 header {
 	font-size: 7vh;
@@ -20,18 +20,21 @@ header {
 	text-align: center;
 }
 
-p.fronttop {
+div.front {
 	width: 100%;
 	text-align: justify;
 	padding-left: 20vw;
 	padding-right: 20vw;
 }
 
-
-
-#description h1{
+div.front h1 {
 	text-align: center;
 }
+
+
+
+
+
 
 
 
@@ -44,14 +47,12 @@ p.fronttop {
 	width: 96%;
 }
 
-
 #visualizer + * {
 	margin-top: 1vh;
 }
 
 #visualizer > div {
 	border: 1px solid #73ff67;
-
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -74,13 +75,12 @@ p.fronttop {
 	margin-left: calc(var(--size) / -2);
 	margin-top: calc(var(--size) / -2);
 	border-radius: 10vw;
-	background-color: rgb(255, 217, 0);
+	background-color: rgb(116, 255, 88);
 	z-index: 100;
 }
 
-
 #visualizer .network .connection {
-	--thickness: .4vh;
+	--thickness: .3vh;
 	height: var(--thickness);
 	width: var(--length);
 	margin-left: calc(var(--length) / -2);
@@ -92,35 +92,26 @@ p.fronttop {
 	transition: opacity .5s ease-out;
 }
 
-
-
-
-
-
-
-
 #visualizer .blockchain {
 	top: 72%;
 	height: 25vh;
 	background-color: green;
 }
 
-
-
-
-
 #controls {
 	background-color: rgba(197, 197, 197, 0.158);
-	border: 1px solid #ffffff;
+	border-top: 1px solid #ffffff;
+	border-bottom: 1px solid #ffffff;
+
 	height: 13vh;
 	padding: 1vh;
 }
 
 footer {
-	background-color: #4B4B4B;
+	background-color: #9494943b;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 100px;
+	height: 10vh;
 }
 

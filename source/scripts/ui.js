@@ -157,11 +157,7 @@ function generateInputs(inputData, parent){
 				break;
 			}
 
-			case "number": {
-				const number = document.createElement("");
 
-				break;
-			}
 		}
 	}
 
