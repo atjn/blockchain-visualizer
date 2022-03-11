@@ -10,8 +10,8 @@ body {
 	margin: 0;
 	padding: 0;
 	border: 0;
-	background: #1a1a1a;
-	color: rgb(228, 228, 228);
+	background: #1d1d1d;
+	color: rgb(255, 255, 255);
 }
 
 header {
@@ -31,18 +31,11 @@ div.front h1 {
 	text-align: center;
 }
 
-
-
-
-
-
-
-
 #visualizer {
 	position: relative;
 	margin-top: 1vh;
 	top: 2vh;
-	height: 96vh;
+	height: 98vh;
 	left: 2%;
 	width: 96%;
 }
@@ -52,7 +45,7 @@ div.front h1 {
 }
 
 #visualizer > div {
-	border: 1px solid #73ff67;
+	border: 1px solid #ffffff;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -95,7 +88,7 @@ div.front h1 {
 #visualizer .blockchain {
 	top: 72%;
 	height: 25vh;
-	background-color: green;
+	background-color: rgb(119, 119, 119);
 }
 
 #controls {
