@@ -24,7 +24,7 @@ export class Packet{
 		this.distance = distance(fromPosition, toPosition);
 
 		// Compute the delay of the packet based on the length between nodes
-		this.delay = this.distance * globalThis.settings.network.speed;
+		this.delay = this.distance * globalThis.settings.network.delay;
 
 	}
 }

@@ -46,7 +46,7 @@ const allInputs = {
 				default: 20,
 				description: "How many nodes should the simulation consist of.",
 			},
-			speed: {
+			delay: {
 				type: "range",
 				min: 500,
 				max: 5000,
@@ -57,11 +57,11 @@ const allInputs = {
 		},
 	},
 	seed: {
-		type: "range",
+		type: "number",
 		min: 1,
 		max: 10000,
 		step: 1,
-		default: Math.random() * 10000,
+		default: Math.floor(Math.random() * 10000),
 		description: `If you run the simulation multiple times with the same seed, then all runs will be identical. If you use different seeds, then the position of the nodes, as well as which nodes get to publish which blocks, and so on, are all different between runs.`,
 	},
 	attackers: {
@@ -81,7 +81,50 @@ const allInputs = {
 		default: 1,
 		description: "Use this to speed up or slow down the simulation to make it easier to follow along. This does not actually change anything in the simulation, it only changes the playback rate.",
 	},
+	nodes: {
+		type: "box",
+		description: "Settings related to the simulated network",
+		children: {
+			delay: {
+				type: "range",
+				min: 500,
+				max: 5000,
+				default: 1000,
+				unit: "ms",
+				description: "How slow new nodes are added to the network. In other words; how many milliseconds should it take for a new node to be added to the entire network visualization.",
+			},
+			startNodes: {
+				type: "range",
+				min: 1,
+				max: 100,
+				default: 5,
+				description: "How many nodes are added to the network in the start of the simulation. In other words; how many nodes the simulation start with having visualizatied.",
+			},
+			nodesToAdd: {
+				type: "range",
+				min: 1,
+				max: 10,
+				default: 5,
+				description: "How many nodes are added to the network everytime the network adds new nodes. In other words; how many nodes the simulation adds",
+			},
+		}
+	},
+	block:{
+		type: "box",
+		description: "Settings related to the simulated network",
+		children: {
+			delay: {
+				type: "range",
+				min: 500,
+				max: 5000,
+				default: 1000,
+				unit: "ms",
+				description: "How slow new the block should send packets to the network. In other words; how many milliseconds should it take for a new packet to be send to the other blocks in the network visualization.",
+			},
+		}
+	}
 };
+
 
 /**
  * Generates all input elements for the simulation, based on the variable `allInputs` defined above.
@@ -157,6 +200,25 @@ function generateInputs(inputData, parent){
 				break;
 			}
 
+			case "number": {
+				const number = document.createElement("input");
+				number.type = data.type;
+				number.name = name;
+				number.id = name;
+
+				for (const key of ["min", "max", "step"]) {
+					if (data[key]) number[key] = data[key];
+				}
+
+				parent.appendChild(number);
+				appendDataReader(number);
+				number.value = data.default;
+
+				// This makes the input handler run on this control, which saves the inital default value to `globalThis.settings`.
+				number.dispatchEvent(new InputEvent("input"));
+
+				break;
+			}
 
 		}
 	}
