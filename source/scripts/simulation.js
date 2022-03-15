@@ -276,7 +276,7 @@ async function addNodes(){
 
 	if (this.firstNodes.length === 0) {
 		// Run when there are no nodes add at all yet. Establish 5 central nodes that other nodes have hardcoded addresses to (`firstNodes`).
-		while (globalThis.nodes.size < Math.min(5, globalThis.settings.network.nodes)) {
+		while (globalThis.nodes.size < Math.min(globalThis.settings.nodes.startNodes, globalThis.settings.network.nodes)) {
 			const address = globalThis.nodes.create();
 			this.firstNodes.push(address);
 		}
@@ -288,7 +288,7 @@ async function addNodes(){
 	} else {
 		// Run when there are already some nodes, to add more nodes procedurally.
 		const initialNodesCount = globalThis.nodes.size;
-		while (globalThis.nodes.size < Math.min(initialNodesCount + 1, globalThis.settings.network.nodes)) {
+		while (globalThis.nodes.size < Math.min(initialNodesCount + Number(globalThis.settings.nodes.nodesToAdd), globalThis.settings.network.nodes)) {
 			const address = globalThis.nodes.create();
 			const addressPacket = new AddressPacket(address, address, this.firstNodes);
 
@@ -298,7 +298,8 @@ async function addNodes(){
 
 	// If there are still more nodes to be added, then enqueue a function event for `addNodes` to continue after a small timeout.
 	if (globalThis.nodes.size < globalThis.settings.network.nodes) {
-		const nextTimestamp = this.timestamp + 6000;
+		const nextTimestamp = this.timestamp + Number(globalThis.settings.nodes.delay);
+		console.log(nextTimestamp);
 		globalThis.eventQueue.enqueue(
 			new FunctionEvent(
 				addNodes,
@@ -323,7 +324,7 @@ function newBlock(){
 
 	globalThis.eventQueue.enqueue(new NodeEvent(newBlockSignal, globalThis.timestamp));
 
-	globalThis.eventQueue.enqueue(new FunctionEvent(newBlock, undefined, globalThis.timestamp + 5000));
+	globalThis.eventQueue.enqueue(new FunctionEvent(newBlock, undefined, globalThis.timestamp + Number(globalThis.settings.block.delay)));
 
 }
 
