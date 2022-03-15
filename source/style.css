@@ -1,16 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
 * {
 	box-sizing: border-box;
 	font-family: 'Space Mono', monospace;
 
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
 
 body {
 	margin: 0;
 	padding: 0;
 	border: 0;
-	background: #1d1d1d;
+	background: #181818;
 	color: rgb(255, 255, 255);
 }
 
