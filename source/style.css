@@ -1,24 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
+* {
+	box-sizing: border-box;
+	font-family: 'Space Mono', monospace;
+
+}
+
+
 body {
 	margin: 0;
 	padding: 0;
-	font-family: "Arial", sans-serif;
-	background: #2B2B2B;
-	color: white;
+	border: 0;
+	background: #181818;
+	color: rgb(255, 255, 255);
+}
+
+header {
+	font-size: 7vh;
+	width: 100%;
+	text-align: center;
+}
+
+div.front {
+	width: 100%;
+	text-align: justify;
+	padding-left: 25vw;
+	padding-right: 25vw;
+}
+
+div.front h1 {
+	text-align: center;
 }
 
 #visualizer {
-	position: absolute;
+	position: relative;
+	margin-top: 1vh;
 	top: 2vh;
-	height: 96vh;
+	height: 98vh;
 	left: 2%;
 	width: 96%;
 }
 
 #visualizer + * {
-	margin-top: 100vh;
+	margin-top: 1vh;
 }
 
 #visualizer > div {
+	border: 1px solid #ffffff;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -27,7 +55,7 @@ body {
 
 #visualizer .network {
 	height: 70%;
-	background-color: red;
+	background-color: rgba(129, 129, 129, 0.185);
 }
 
 #visualizer .network * {
@@ -43,7 +71,7 @@ body {
 }
 
 #visualizer .network .node {
-	--size: 3vh;
+	--size: 2.5vh;
 	--color: white;
 	background-color: var(--color);
 	z-index: 150;
@@ -65,13 +93,13 @@ body {
 }
 
 #visualizer .network .connection {
-	--thickness: .5vh;
+	--thickness: .3vh;
 	height: var(--thickness);
 	width: var(--length);
 	margin-left: calc(var(--length) / -2);
 	margin-top: calc(var(--thickness) / -2);
 	border-radius: var(--thickness);
-	background-color: blue;
+	background-color: rgb(167, 167, 167);
 	opacity: .5;
 	z-index: 50;
 	transition: opacity .5s ease-out;
@@ -79,26 +107,24 @@ body {
 
 #visualizer .blockchain {
 	top: 72%;
-	height: 28%;
-	background-color: green;
+	height: 25vh;
+	background-color: rgb(119, 119, 119);
 }
 
 #controls {
-	background-color: blue;
-	height: 10vh;
-}
+	background-color: rgba(197, 197, 197, 0.158);
+	border-top: 1px solid #ffffff;
+	border-bottom: 1px solid #ffffff;
 
-#description {
-	background-color: #3B3B3B;
-	text-align: justify;
-	padding: 20px 20vw;
+	height: 13vh;
+	padding: 1vh;
 }
 
 footer {
-	background-color: #4B4B4B;
+	background-color: #9494943b;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 100px;
+	height: 10vh;
 }
 
