@@ -18,6 +18,10 @@
  * whereas the UI events are strictly designed to tell the UI what to draw on the screen, and when.
  */
 
+import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal } from "./nodeMethods.js";
+
+globalThis.timestamp = 0;
+
 /**
  * Handles messages being sent by the UI.
  *
@@ -28,8 +32,11 @@ onmessage = async function (event){
 		// Start the simulation by sending the `globalThis.settings` object from the UI controls.
 		case "start": {
 			globalThis.settings = event.data.settings;
+			const { process } = await import(`./algorithms/${globalThis.settings.network.algorithms}.js`);
+			globalThis.nodeProcess = process;
 			globalThis.settings.run = true;
 			globalThis.eventQueue.enqueue(new FunctionEvent(addNodes));
+			globalThis.eventQueue.enqueue(new FunctionEvent(newBlock, undefined, 5000));
 			break;
 		}
 		// If the simulation is way ahead of the realtime playback, a `pause` command can be send to temporarily pause the simulation.
@@ -53,6 +60,8 @@ class EventQueue{
 	#events = [];
 	#isSorted = true;
 	#dequeueing = false;
+	#dequeueStartTime = 0;
+	#maxDequeueTime = 3000;
 
 	/**
 	 * Sorts the events by timestamp, meaning the next event is always first in line.
@@ -95,15 +104,22 @@ class EventQueue{
 		// If another version already runs, quit instantly. Otherwise make it known that this isntance is now running.
 		if(this.#dequeueing) return;
 		this.#dequeueing = true;
+		this.#dequeueStartTime = globalThis.timestamp;
 
 		// Go through every event in the queue (as long as the simulation isn't paused)
 		while(this.#events.length > 0 && globalThis.settings.run){
+
+			if(globalThis.timestamp - this.#dequeueStartTime > this.#maxDequeueTime){
+				setTimeout(() => {globalThis.eventQueue.dequeue();}, 1);
+				break;
+			}
 
 			// Make sure the queue is sorted chronologically by timestamp
 			this.#sort();
 
 			// Take the event out of the queue
 			const event = this.#events.shift();
+			globalThis.timestamp = event.timestamp;
 
 			// Run the event
 			if(event instanceof FunctionEvent){
@@ -112,12 +128,26 @@ class EventQueue{
 
 			}else if (event instanceof NodeEvent){
 
-				// Get the nodes storage, hand it over to a node process, and then save the modified node storage after the data packet has been processed
-				const process = new NodeProcess({
-					packet: event.data,
-					storage: globalThis.nodes.get(event.data.to),
-				});
-				globalThis.nodes.set(event.data.to, await process.result, event.timestamp);
+				// Get the node's data, hand it over to a node process, and then save the modified node data after the data packet has been processed
+				const { nodeData, sendPackets } = await globalThis.nodeProcess(
+					event.packet,
+					globalThis.nodes.get(event.packet.to),
+				);
+
+				const lastEnd = nodeData.blockchain.getEnds().at(-1);
+				if(lastEnd){
+					sendDrawEvent({
+						type: "nodeColor",
+						address: nodeData.address,
+						color: lastEnd.id,
+					});
+				}
+
+				globalThis.nodes.update(nodeData);
+
+				for(const packet of sendPackets){
+					this.enqueue(new NodeEvent(packet, globalThis.timestamp));
+				}
 
 			}
 
@@ -141,8 +171,6 @@ class SimulationEvent{
 		this.timestamp = timestamp;
 	}
 }
-
-new SimulationEvent();
 
 /**
  * A FunctionEvent denotes that a certain simulation-related function should run at a certain time in the simulation.
@@ -171,20 +199,24 @@ class NodeEvent extends SimulationEvent{
 	/**
 	 * A NodeEvent denotes that one node has sent some sort of packet to another node.
 	 *
-	 * @param {Packet} data - The data packet to send to the other node.
+	 * @param {Packet} packet - The packet to send to the other node.
 	 * @param {number} timestamp - When the packet was sent. (NOT when it should be received).
 	 */
-	constructor(data, timestamp){
-		super(timestamp + data.delay);
-		this.data = data;
+	constructor(packet, timestamp){
+		super(timestamp + packet.delay);
+		this.packet = packet;
 
-		if(data.from !== data.to){
-			postMessage({
-				type: Object.getPrototypeOf(data).constructor.name,
-				timestamp,
-				delay: data.delay,
-				from: data.from,
-				to: data.to,
+		if(packet.from !== packet.to){
+			sendDrawEvent({
+				type: Object.getPrototypeOf(packet).constructor.name,
+				delay: packet.delay,
+				from: packet.from,
+				to: packet.to,
+				blockId: packet.block?.id,
+				position: {
+					to: globalThis.nodes.get(packet.to).position,
+					from: globalThis.nodes.get(packet.from).position,
+				},
 			});
 		}
 
@@ -192,178 +224,39 @@ class NodeEvent extends SimulationEvent{
 }
 
 /**
- * Represents a node that is processing some new data that it has received.
+ * This is the store of all the node's permanent data, linked to their addresses.
  *
- * Under-the-hood, this class spins up a Worker with the chosen algorithm,
- * which is responsible for processing the data packet, and then returns its storage before it is terminated.
- */
-class NodeProcess{
-	/**
-	 * Represents a node that is processing some new data that it has received.
-	 *
-	 * Under-the-hood, this class spins up a Worker with the chosen algorithm,
-	 * which is responsible for processing the data packet, and then returns its storage before it is terminated.
-	 *
-	 * @param {Packet} data - The data packet to process.
-	 */
-	constructor(data){
-		this.#worker = new Worker(`./algorithms/${globalThis.settings.network.algorithms}.js`, { type: "module" });
-		this.#worker.postMessage(data);
-		this.#result = new Promise((resolve, reject) => {
-			this.#worker.onmessage = event => {
-				this.#worker.terminate();
-				resolve(event.data);
-			};
-			this.#worker.onerror = event => {
-				this.#worker.terminate();
-				reject(event);
-			};
-		});
-	}
-	#worker;
-	#result;
-	get result(){
-		return this.#result;
-	}
-}
-
-/**
- * A repersentation of each node's permanent storage.
- * This is where the node saves the blockchain it is aware of, along with other node addresses and so forth.
- *
- * This is theoretically just an object where the node can save anything it wants,
- * but it should save certain things in certain places, so that the simulation knows what is going on.
- *
- * The storage also holds a few values that the simulation uses. Ine example is the x and y coordinates for the node's position.
- */
-class NodeStorage{
-	constructor(){
-		this.position.y = random();
-		this.position.x = random(globalThis.settings.networkBoxRatio);
-	}
-	position = {};
-	nodeAddresses = [];
-}
-
-/**
- * This is the store of all the node's permanent storage, linked to their addresses.
- *
- * Node storage is saved here, until a `NodeProcess` with a specific address runs, in which case the storage
+ * Node data is saved here, until a `NodeProcess` with a specific address runs, in which case the data
  * for that address is taken out, and then later delivered back when the `NodeProcess` has altered it.
- *
- * When the storage is delivered back, this class checks if there are any changes, and if so, send appropriate draw events to the UI thread.
  */
 class Nodes extends Map{
-	constructor(){
-		super();
+
+	create(){
+		const newNode = new NodeData();
+		super.set(newNode.address, newNode);
+
+		sendDrawEvent({
+			type: "node",
+			address: newNode.address,
+			position: newNode.position,
+		});
+
+		return newNode.address;
 	}
 
 	/**
-	 * Save a new/modified storage for a specific node address.
+	 * Save a new/modified data object for a specific node address.
 	 *
-	 * @param {number} address - The address of the node tha towns the storage.
-	 * @param {NodeStorage} newStorage - The new storage object to save.
-	 * @param {number} timestamp - When the storage was saved, according to simulation time.
+	 * @param {NodeData} newData - The new data object to save.
+	 * @param {number} timestamp - When the data was saved, according to simulation time.
 	 *
 	 * @returns {Nodes} - This.
 	 */
-	set(address, newStorage, timestamp){
-		// Get the storage as it was, in order to compare for differences
-		const oldStorage = super.get(address);
-
-		if(oldStorage){
-
-			// Check if any new node addresses have been added. If so, send a draw event for a new connection.
-			for(const peerAddress of newStorage.nodeAddresses){
-				if(peerAddress === address) continue;
-				if(!oldStorage.nodeAddresses.includes(peerAddress)){
-					const fromPosition = newStorage.position;
-					const toPosition = super.get(peerAddress).position;
-					postMessage({
-						type: "connection",
-						timestamp,
-						active: true,
-						id: `${address}-${peerAddress}`,
-						length: distance(fromPosition, toPosition, true),
-						slope: slope(fromPosition, toPosition),
-						position: middle(fromPosition, toPosition, true),
-					});
-				}
-			}
-
-			// Check if any node addresses have been removed. If so, send a draw event for a removed connection.
-			for(const peerAddress of oldStorage.nodeAddresses){
-				if(peerAddress === address) continue;
-				if(!newStorage.nodeAddresses.includes(peerAddress)){
-					postMessage({
-						type: "connection",
-						timestamp,
-						active: false,
-						id: `${address}-${peerAddress}`,
-					});
-				}
-			}
-
-		}else{
-			/**
-			 * If this is the first time storage has been saved to this address,
-			 * then it means this is a new node. Send a draw event for a new node.
-			 */
-			postMessage({
-				type: "node",
-				timestamp,
-				active: true,
-				address,
-				position: newStorage.position,
-			});
-		}
-
-		// Save the new storage.
-		return super.set(address, newStorage);
+	update(newData){
+		// Finally, save the new data.
+		return super.set(newData.address, newData);
 	}
 
-}
-
-/**
- * A generic packet of data that can be send from a node to a node.
- */
-class Packet{
-	/**
-	 * A generic packet of data that can be send from a node to a node.
-	 *
-	 * @param {number} to - Address of the node to send this packet to.
-	 * @param {number} from - Address of the that send the packet.
-	 */
-	constructor(to, from){
-		this.to = to;
-		this.from = from;
-
-		// Compute the length between the two nodes
-		const { position: fromPosition } = globalThis.nodes.get(from);
-		const { position: toPosition } = globalThis.nodes.get(to);
-		this.distance = distance(fromPosition, toPosition);
-
-		// Compute the delay of the packet based on the length between nodes
-		this.delay = this.distance * globalThis.settings.network.speed;
-
-	}
-}
-
-/**
- * An AddressPacket represents a data packet with node addresses in it.
- */
-class AddressPacket extends Packet{
-	/**
-	 * An AddressPacket represents a data packet with node addresses in it.
-	 *
-	 * @param {number} to - Address of the node to send this packet to.
-	 * @param {number} from - Address of the that send the packet.
-	 * @param {(number|number[])} addresses - The list of other node addresses to deliver.
-	 */
-	constructor(to, from, addresses){
-		super(to, from);
-		this.addresses = Array.isArray(addresses) ? addresses : [];
-	}
 }
 
 /**
@@ -384,9 +277,8 @@ async function addNodes(){
 	if (this.firstNodes.length === 0) {
 		// Run when there are no nodes add at all yet. Establish 5 central nodes that other nodes have hardcoded addresses to (`firstNodes`).
 		while (globalThis.nodes.size < Math.min(5, globalThis.settings.network.nodes)) {
-			const address = newAddress();
+			const address = globalThis.nodes.create();
 			this.firstNodes.push(address);
-			globalThis.nodes.set(address, new NodeStorage(), this.timestamp);
 		}
 		// Give the 5 nodes each other's addresses
 		for(const nodeAddress of this.firstNodes) {
@@ -396,9 +288,8 @@ async function addNodes(){
 	} else {
 		// Run when there are already some nodes, to add more nodes procedurally.
 		const initialNodesCount = globalThis.nodes.size;
-		while (globalThis.nodes.size < Math.min(initialNodesCount + 5, globalThis.settings.network.nodes)) {
-			const address = newAddress();
-			globalThis.nodes.set(address, new NodeStorage(), this.timestamp);
+		while (globalThis.nodes.size < Math.min(initialNodesCount + 1, globalThis.settings.network.nodes)) {
+			const address = globalThis.nodes.create();
 			const addressPacket = new AddressPacket(address, address, this.firstNodes);
 
 			globalThis.eventQueue.enqueue(new NodeEvent(addressPacket, this.timestamp));
@@ -422,107 +313,17 @@ async function addNodes(){
 }
 
 /**
- * Hands out new node addresses.
- * The addresses are just numbers that count up, for our purposes, it is a fine id.
  *
- * @returns {number} - A new unique node address.
  */
-function newAddress(){
-	globalThis.rollingAddress ??= 0;
-	globalThis.rollingAddress++;
-	return globalThis.rollingAddress;
-}
+function newBlock(){
+	const nodeAddresses = [...globalThis.nodes.keys()];
+	const findingNodeAddress = nodeAddresses[Math.floor(random(nodeAddresses.length))];
 
-/**
- * Outputs a random number between 0 and `max` generated from the global seed.
- * If the same seed is used between runs, the generator will always produce the exact same sequence of "random" values.
- *
- * This specific implementation of a number generator is called mulberry32.
- *
- * @param {number} max - The maximum number allowed. (the minimum is always 0).
- *
- * @returns {number} - A random number between 0 and `max`.
- */
-function random(max = 1){
-	globalThis.rs ??= globalThis.settings.seed;
-	/* eslint-disable-next-line */
-	let t; return max*((globalThis.rs=globalThis.rs+1831565813|0,t=Math.imul(globalThis.rs^globalThis.rs>>>15,1|globalThis.rs),t=t+Math.imul(t^t>>>7,61|t)^t,(t^t>>>14)>>>0)/2**32);
-}
+	const newBlockSignal = new NewBlockSignal(findingNodeAddress);
 
-/**
- * Calculates the distance between two nodes.
- *
- * @param {object} root0 - Position of node 1.
- * @param {number} root0.x - Horizontal position of node 1.
- * @param {number} root0.y - Vertical position of node 1.
- * @param {object} root1 - Position of node 2.
- * @param {number} root1.x - Horizontal position of node 2.
- * @param {number} root1.y - Vertical position of node 2.
- * @param {boolean} useBoxRatio - If true, returns a number that is compatible with the UI positions of the nodes. Otherwise it is compatible with the simulation positions.
- *
- * @returns {number} - The distance between the two nodes.
- */
-function distance({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
-	// Using Pythagora's sentence a²+b²=c²
-	if(useBoxRatio){
-		return (Math.sqrt(
-			((x1 - x2) ** 2) +
-			((y1 - y2) ** 2),
-		) / globalThis.settings.networkBoxRatio);
-	}else{
-		return Math.sqrt(
-			((x1 - x2) ** 2) +
-			((y1 - y2) ** 2),
-		);
-	}
-}
+	globalThis.eventQueue.enqueue(new NodeEvent(newBlockSignal, globalThis.timestamp));
 
-/**
- * Calculates the middle position between two nodes.
- *
- * @param {object} root0 - Position of node 1.
- * @param {number} root0.x - Horizontal position of node 1.
- * @param {number} root0.y - Vertical position of node 1.
- * @param {object} root1 - Position of node 2.
- * @param {number} root1.x - Horizontal position of node 2.
- * @param {number} root1.y - Vertical position of node 2.
- * @param {boolean} useBoxRatio - If true, returns a position that is compatible with the UI positions of the nodes. Otherwise it is compatible with the simulation positions.
- *
- * @returns {object} - The position of the middle point between the two nodes.
- */
-function middle({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
-	if(useBoxRatio){
-		return {
-			x: ((x1 + x2) / 2) / globalThis.settings.networkBoxRatio,
-			y: (y1 + y2) / 2,
-		};
-	}else{
-		return {
-			x: (x1 + x2) / 2,
-			y: (y1 + y2) / 2,
-		};
-	}
-}
-
-/**
- * Calculate the slope of a connection between two nodes.
- *
- * @param {object} root0 - Position of node 1.
- * @param {number} root0.x - Horizontal position of node 1.
- * @param {number} root0.y - Vertical position of node 1.
- * @param {object} root1 - Position of node 2.
- * @param {number} root1.x - Horizontal position of node 2.
- * @param {number} root1.y - Vertical position of node 2.
- *
- * @returns {number} - The slope of the connection in degrees.
- */
-function slope({x: x1, y: y1}, {x: x2, y: y2}){
-
-	// First get the slope as a fraction
-	const slopeFraction = (y1 - y2) / (x1 - x2);
-
-	// Now convert from fraction to degrees
-	return Math.atan(slopeFraction) * (180 / Math.PI);
+	globalThis.eventQueue.enqueue(new FunctionEvent(newBlock, undefined, globalThis.timestamp + 5000));
 
 }
 

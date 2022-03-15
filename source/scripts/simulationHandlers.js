@@ -20,7 +20,7 @@ export class Simulation extends Worker{
 	constructor(){
 
 		// Start the Worker with the simulation code
-		super("scripts/simulation.js", { type: "module" });
+		super("./scripts/simulation.js", { type: "module" });
 
 		/**
 		 * This function handles all messages that are returned from the simulation.
@@ -39,6 +39,9 @@ export class Simulation extends Worker{
 			// Make sure the `eventDispatcher` is running to handle this new event.
 			globalThis.eventDispatcher.poke();
 
+		};
+		this.onerror = event => {
+			throw event;
 		};
 
 		// Send the command to start the simulation, and pass the `globalThis.settings` element.
@@ -267,8 +270,7 @@ export class EventDispatcher{
 export class EventDrawer{
 
 	#nodes = new Map();
-	#connection = new Map();
-	#packets = new Map();
+	#connections = new Map();
 	#networkBox = document.querySelector("#visualizer .network");
 
 	/**
@@ -293,6 +295,13 @@ export class EventDrawer{
 				}
 				break;
 			}
+			case "nodeColor": {
+
+				const node = this.#nodes.get(event.address);
+				node.style.setProperty("--color", event.color);
+
+				break;
+			}
 			case "connection": {
 				if(event.active){
 					const connection = document.createElement("div");
@@ -303,11 +312,54 @@ export class EventDrawer{
 					connection.style.transform = `rotate(${event.slope}deg)`;
 
 					this.#networkBox.appendChild(connection);
-					this.#nodes.set(event.id, connection);
+					this.#connections.set(event.id, connection);
 				}else{
-					const connection = this.#nodes.get(event.address);
-					connection.classList.add("inactive");
+					const connection = this.#connections.get(event.id);
+					connection.remove();
 				}
+				break;
+			}
+			case "AddressPacket": {
+				const packet = document.createElement("div");
+				packet.classList.add("packet");
+				packet.classList.add("AddressPacket");
+
+				const delay = event.delay;
+
+				packet.style.top = `${event.position.from.y * 100}%`;
+				packet.style.left = `${(event.position.from.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				packet.style.transitionDuration = `${delay}ms`;
+
+				this.#networkBox.appendChild(packet);
+
+				setTimeout((packet, position) => {
+					packet.style.top = `${position.y * 100}%`;
+					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				}, 1, packet, event.position.to);
+				setTimeout(packet => {packet.remove();}, delay + 1000, packet);
+
+				break;
+			}
+			case "BlockPacket": {
+				const packet = document.createElement("div");
+				packet.classList.add("packet");
+				packet.classList.add("BlockPacket");
+
+				const delay = event.delay;
+
+				packet.style.top = `${event.position.from.y * 100}%`;
+				packet.style.left = `${(event.position.from.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				packet.style.transitionDuration = `${delay}ms`;
+				packet.style.setProperty("--id", event.blockId);
+
+				this.#networkBox.appendChild(packet);
+
+				setTimeout((packet, position) => {
+					packet.style.top = `${position.y * 100}%`;
+					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				}, 1, packet, event.position.to);
+				setTimeout(packet => {packet.remove();}, delay + 1000, packet);
+
 				break;
 			}
 		}
