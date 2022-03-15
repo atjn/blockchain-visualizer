@@ -12,10 +12,6 @@
  *
  * @param {object} event - The message event sent from the simulation.
  */
-onmessage = event => {
-	const storage = event.data.storage;
-
-	//Does nothing. No connections are made :P
-
-	postMessage(storage);
-};
+ export async function process(packet, nodeData){
+	return { nodeData, sendPackets: [] };
+ }

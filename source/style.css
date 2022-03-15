@@ -62,15 +62,34 @@ div.front h1 {
 	position: absolute;
 }
 
-#visualizer .network .node {
-	--size: 2.5vh;
+#visualizer .network :is(.node, .packet){
 	width: var(--size);
 	height: var(--size);
 	margin-left: calc(var(--size) / -2);
 	margin-top: calc(var(--size) / -2);
-	border-radius: 10vw;
-	background-color: rgb(116, 255, 88);
+	border-radius: var(--size);
+}
+
+#visualizer .network .node {
+	--size: 2.5vh;
+	--color: white;
+	background-color: var(--color);
+	z-index: 150;
+}
+
+#visualizer .network .packet {
+	--size: 2vh;
 	z-index: 100;
+	transition-property: top, left;
+	transition-timing-function: linear;
+}
+
+#visualizer .network .AddressPacket {
+	background-color: grey;
+}
+
+#visualizer .network .BlockPacket {
+	background-color: var(--id);
 }
 
 #visualizer .network .connection {
@@ -79,7 +98,7 @@ div.front h1 {
 	width: var(--length);
 	margin-left: calc(var(--length) / -2);
 	margin-top: calc(var(--thickness) / -2);
-	border-radius: 10vw;
+	border-radius: var(--thickness);
 	background-color: rgb(167, 167, 167);
 	opacity: .5;
 	z-index: 50;
