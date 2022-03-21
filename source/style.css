@@ -15,7 +15,7 @@ body {
 	color: rgb(255, 255, 255);
 }
 
-header {
+h1 {
 	font-size: 7vh;
 	width: 100%;
 	text-align: center;
@@ -26,10 +26,6 @@ div.front {
 	text-align: justify;
 	padding-left: 25vw;
 	padding-right: 25vw;
-}
-
-div.front h1 {
-	text-align: center;
 }
 
 #visualizer {
