@@ -6,10 +6,14 @@
   "type": "module",
   "scripts": {
     "lint:js": "eslint \"**/*.js\" --fix",
+    "lint:js:nofix": "eslint \"**/*.js\"",
     "lint:css": "stylelint \"source/**/*.css\" --fix",
+    "lint:css:nofix": "stylelint \"source/**/*.css\"",
     "lint:html": "html-validate \"source/**/*.html\"",
+    "lint:html:nofix": "npm run lint:html",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
-    "test": "npm install && npm run lint"
+    "lint:nofix": "npm run lint:js:nofix && npm run lint:css:nofix && npm run lint:html:nofix",
+    "test": "npm install && npm run lint:nofix"
   },
   "repository": {
     "type": "git",
