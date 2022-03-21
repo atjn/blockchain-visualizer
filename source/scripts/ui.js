@@ -107,9 +107,9 @@ const allInputs = {
 				default: 5,
 				description: "How many nodes are added to the network everytime the network adds new nodes. In other words; how many nodes the simulation adds",
 			},
-		}
+		},
 	},
-	block:{
+	block: {
 		type: "box",
 		description: "Settings related to the simulated network",
 		children: {
@@ -121,8 +121,8 @@ const allInputs = {
 				unit: "ms",
 				description: "How slow new the block should send packets to the network. In other words; how many milliseconds should it take for a new packet to be send to the other blocks in the network visualization.",
 			},
-		}
-	}
+		},
+	},
 };
 
 

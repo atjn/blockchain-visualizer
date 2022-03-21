@@ -11,7 +11,9 @@
  * packets to send to other nodes.
  *
  * @param {object} event - The message event sent from the simulation.
+ * @param packet
+ * @param nodeData
  */
- export async function process(packet, nodeData){
+export async function process(packet, nodeData){
 	return { nodeData, sendPackets: [] };
- }
+}
