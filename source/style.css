@@ -121,7 +121,7 @@ div.front h1 {
 }
 
 footer {
-	background-color: #9494943b;
+	background-color: #5e5e5e3b;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -129,5 +129,22 @@ footer {
 }
 
 div.fixedbutt {
+	background-color: rgb(53, 53, 53);
+	background-image: url('/source/images/vertalign.svg');
+	background-repeat: no-repeat;
+	background-position: center;
 	position: fixed;
+	z-index: 999;
+	top: 3vh;
+	right: 3vw;
+	border: 1px solid white;
+
+	--padding: 5px;
+	padding: 3px;
+	padding-left: var(--padding);
+	padding-right: var(--padding);
 }
+
+div.fixedbutt > a {color: #ffffff00; text-decoration: none;}
+div.fixedbutt > a:visited {color: var(--color);}
+div.fixedbutt:hover {filter: brightness(1.8);}
