@@ -11,6 +11,8 @@
  * Represents the simulation, which is running in a separate Worker.
  * When the class is constructed, it automatically starts a Worker thread and passes the appropriate settings to it.
  */
+
+import { resetSimulation } from "./ui.js";
 export class Simulation extends Worker{
 
 	/**
@@ -41,6 +43,10 @@ export class Simulation extends Worker{
 
 		};
 		this.onerror = event => {
+			globalThis.messages.new({
+				type: "error",
+				text: "Sorry, there was an unexpected error in the simulation. This probably means the simulation won't work as intended.",
+			});
 			throw event;
 		};
 
@@ -104,7 +110,7 @@ export class SimulationTime{
 	 * The time can be pasued/resumed, and can also be sped up or slowed down.
 	 */
 	constructor(){
-		this.reset();
+		this.reset(globalThis.urlState.restoredTime);
 	}
 
 	// The timestamp in real time, where the simulation time was started.
@@ -114,14 +120,20 @@ export class SimulationTime{
 	#pausedTime = 0;
 
 	#paused = true;
+	get paused(){
+		return this.#paused;
+	}
 
 	/**
 	 * Resets the simulation time to 0 and pauses it.
+	 *
+	 * @param time
 	 */
-	reset(){
+	reset(time = 0){
 		this.#paused = true;
-		this.#startTime = Date.now();
-		this.#pausedTime = Date.now();
+		const realNow = Date.now();
+		this.#startTime = realNow - time;
+		this.#pausedTime = realNow;
 	}
 
 	/**
@@ -159,13 +171,15 @@ export class SimulationTime{
 	 */
 	get now(){
 
+		const realNow = Date.now();
+
 		// Calculate the time between when the simulation was started and now (in real time),
-		const playTime = Date.now() - this.#startTime;
+		const playTime = realNow - this.#startTime;
 
 		if(this.#paused){
 
 			// If the time is paused, return the playtime, but subtract the time since the simulation was paused.
-			return playTime - (Date.now() - this.#pausedTime);
+			return playTime - (realNow - this.#pausedTime);
 
 		}else{
 
@@ -173,6 +187,18 @@ export class SimulationTime{
 			return playTime;
 
 		}
+	}
+
+	set now(value){
+		const reset = Boolean(value < this.now);
+
+		const realNow = Date.now();
+
+		this.#startTime = realNow - value;
+		this.#pausedTime = realNow;
+
+		if(reset) resetSimulation(false);
+		globalThis.eventDispatcher.poke();
 	}
 }
 
@@ -214,7 +240,7 @@ export class EventDispatcher{
 		if(
 			!event ||
 			!globalThis.events[this.#nextEvent + 10] ||
-			globalThis.events[globalThis.events.length - 1].timestamp - globalThis.simulationTime.now < globalThis.simulation.bufferTime.min
+			globalThis.events.at(-1).timestamp - globalThis.simulationTime.now < globalThis.simulation.bufferTime.min
 		){
 			globalThis.simulation.resume();
 		}
@@ -223,6 +249,10 @@ export class EventDispatcher{
 		// Otherwise, make it known that this instance is now running.
 		if(this.#running || !event) return;
 		this.#running = true;
+
+		if(globalThis.urlState.lastUpdate < Date.now() - globalThis.urlState.timelineUpdateFrequency){
+			globalThis.urlState.update();
+		}
 
 		/**
 		 * Loop through all events with a timestamp that is after the current simulation time.
@@ -250,7 +280,7 @@ export class EventDispatcher{
 		 * other functions will make sure to `poke` the function in those cases, allowing it
 		 * to run and set a new timeout.
 		 */
-		if(event){
+		if(event && !globalThis.simulationTime.paused){
 			setTimeout(() => {globalThis.eventDispatcher.poke();}, (event.timestamp - globalThis.simulationTime.now) + 1);
 		}
 
@@ -320,6 +350,7 @@ export class EventDrawer{
 				break;
 			}
 			case "AddressPacket": {
+				if(event.timestamp + event.delay < globalThis.simulationTime.now) break;
 				const packet = document.createElement("div");
 				packet.classList.add("packet");
 				packet.classList.add("AddressPacket");
@@ -341,6 +372,7 @@ export class EventDrawer{
 				break;
 			}
 			case "BlockPacket": {
+				if(event.timestamp + event.delay < globalThis.simulationTime.now) break;
 				const packet = document.createElement("div");
 				packet.classList.add("packet");
 				packet.classList.add("BlockPacket");
