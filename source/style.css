@@ -41,6 +41,21 @@ h1 {
 	text-align: center;
 }
 
+.content {
+	flex: 1 1 0;
+	padding: 2rem;
+}
+
+.content h1 {
+	color: #3C3F58;
+	font-size: 2.5rem;
+	margin-bottom: 1rem;
+}
+
+.content p {
+	color: #707793;
+}
+
 div.message {
 	--fade-time-ms: 500;
 	position: fixed;
@@ -212,19 +227,4 @@ footer {
 	position: center;
 	top: 0;
 	left: 0;
-}
-
-.content {
-	flex: 1 1 0;
-	padding: 2rem;
-}
-
-.content h1 {
-	color: #3C3F58;
-	font-size: 2.5rem;
-	margin-bottom: 1rem;
-}
-
-.content p {
-	color: #707793;
 }
