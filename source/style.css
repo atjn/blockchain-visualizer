@@ -40,6 +40,51 @@ header {
 	text-align: center;
 }
 
+div.message {
+	--fade-time-ms: 500;
+	position: fixed;
+	left: 0;
+	width: 100vw;
+	opacity: 0;
+	background-color: rgba(50 50 0 / .96);
+	transition-property: opacity, top, height;
+	transition-timing-function: ease-out;
+	border-bottom: 1px solid black;
+	display: grid;
+	place-items: center stretch;
+	grid-template-columns: auto var(--height) 1vh;
+	grid-template-rows: 100%;
+	grid-template-areas: "text close .";
+	z-index: 200;
+}
+div.message:not(:hover, :focus) {
+	height: var(--height);
+	z-index: 100;
+}
+div.message.error {
+	background-color: rgba(50 0 0 / .96);
+}
+div.message > p {
+	grid-area: text;
+	margin: 0;
+	padding: .7vh;
+	display: box;
+	-webkit-box-orient: vertical;
+}
+div.message:not(:hover, :focus) > p:not(:hover, :focus) {
+	-webkit-line-clamp: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+div.message > button {
+	grid-area: close;
+	font-size: 2.5vh;
+	background: none;
+	border: none;
+	outline: none;
+	cursor: pointer;
+}
+
 div.front {
 	width: 100%;
 	text-align: justify;
@@ -137,6 +182,10 @@ div.front h1 {
 
 	height: 13vh;
 	padding: 1vh;
+}
+
+#timeline {
+	width: 60vw;
 }
 
 footer {
