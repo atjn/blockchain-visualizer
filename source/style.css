@@ -3,7 +3,7 @@
 * {
 	box-sizing: border-box;
 	font-family: 'Space Mono', monospace;
-
+	scroll-behavior: smooth;
 }
 
 
@@ -128,3 +128,6 @@ footer {
 	height: 10vh;
 }
 
+div.fixedbutt {
+	position: fixed;
+}
