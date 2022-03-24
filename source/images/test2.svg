@@ -6,8 +6,10 @@
     stroke: blue;
   }
 
-    @media (prefers-color-scheme: dark) {
-      stroke: yellow;
+  @media (prefers-color-scheme: dark) {
+      path {
+        stroke: yellow;
+      }
   }
 
 </style>
