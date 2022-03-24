@@ -217,6 +217,7 @@ footer {
 	top: 0;
 	left: 0;
 	height: 20000px;
+	z-index: 1000;
 }
 
 .sidebar h3 {
