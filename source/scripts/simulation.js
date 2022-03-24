@@ -299,7 +299,6 @@ async function addNodes(){
 	// If there are still more nodes to be added, then enqueue a function event for `addNodes` to continue after a small timeout.
 	if (globalThis.nodes.size < globalThis.settings.network.nodes) {
 		const nextTimestamp = this.timestamp + Number(globalThis.settings.nodes.delay);
-		console.log(nextTimestamp);
 		globalThis.eventQueue.enqueue(
 			new FunctionEvent(
 				addNodes,
@@ -318,7 +317,7 @@ async function addNodes(){
  */
 function newBlock(){
 	const nodeAddresses = [...globalThis.nodes.keys()];
-	const findingNodeAddress = nodeAddresses[Math.floor(random(nodeAddresses.length))];
+	const findingNodeAddress = nodeAddresses[Math.floor(random("consensus", nodeAddresses.length))];
 
 	const newBlockSignal = new NewBlockSignal(findingNodeAddress);
 
