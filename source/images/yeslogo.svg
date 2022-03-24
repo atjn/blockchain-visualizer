@@ -3,12 +3,12 @@
   <style>
     path {
     fill: none;
-    stroke: red;
+    stroke: #222222;
     }
 
     @media (prefers-color-scheme: dark) {
       path {
-        stroke: yellow;
+        stroke: #E6E6E6;
       }
   </style>
 
