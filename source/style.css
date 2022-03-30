@@ -25,6 +25,7 @@
 * {
 	box-sizing: border-box;
 	font-family: "Space Mono", monospace;
+
 }
 
 body {
@@ -208,6 +209,26 @@ footer {
 	height: 10vh;
 }
 
+div.fixedbutt {
+	background-color: rgb(53 53 53);
+	background-image: url("images/vertalign.svg");
+	background-repeat: no-repeat;
+	background-position: center;
+	position: fixed;
+	z-index: 999;
+	top: 3vh;
+	right: 3vw;
+	border: 1px solid white;
+
+	--padding: 5px;
+	padding: 3px;
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+
+div.fixedbutt > a {color: #FFFFFF00; text-decoration: none;}
+div.fixedbutt > a:visited {color: var(--color);}
+div.fixedbutt:hover {filter: brightness(1.8);}
 .sidebar {
 	flex: 1 1 0;
 	max-width: 300px;
