@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Mono&display=swap");
 
 * {
 	box-sizing: border-box;
-	font-family: 'Space Mono', monospace;
+	font-family: "Space Mono", monospace;
 	scroll-behavior: smooth;
 }
 
@@ -12,7 +12,7 @@ body {
 	padding: 0;
 	border: 0;
 	background: #181818;
-	color: rgb(255, 255, 255);
+	color: rgb(255 255 255);
 }
 
 header {
@@ -46,7 +46,7 @@ div.front h1 {
 }
 
 #visualizer > div {
-	border: 1px solid #ffffff;
+	border: 1px solid #FFFFFF;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -55,14 +55,14 @@ div.front h1 {
 
 #visualizer .network {
 	height: 70%;
-	background-color: rgba(129, 129, 129, 0.185);
+	background-color: rgb(129 129 129 / 0.185);
 }
 
 #visualizer .network * {
 	position: absolute;
 }
 
-#visualizer .network :is(.node, .packet){
+#visualizer .network :is(.node, .packet) {
 	width: var(--size);
 	height: var(--size);
 	margin-left: calc(var(--size) / -2);
@@ -99,7 +99,7 @@ div.front h1 {
 	margin-left: calc(var(--length) / -2);
 	margin-top: calc(var(--thickness) / -2);
 	border-radius: var(--thickness);
-	background-color: rgb(167, 167, 167);
+	background-color: rgb(167 167 167);
 	opacity: .5;
 	z-index: 50;
 	transition: opacity .5s ease-out;
@@ -108,20 +108,20 @@ div.front h1 {
 #visualizer .blockchain {
 	top: 72%;
 	height: 25vh;
-	background-color: rgb(119, 119, 119);
+	background-color: rgb(119 119 119);
 }
 
 #controls {
-	background-color: rgba(197, 197, 197, 0.158);
-	border-top: 1px solid #ffffff;
-	border-bottom: 1px solid #ffffff;
+	background-color: rgb(197 197 197 / 0.158);
+	border-top: 1px solid #FFFFFF;
+	border-bottom: 1px solid #FFFFFF;
 
 	height: 13vh;
 	padding: 1vh;
 }
 
 footer {
-	background-color: #5e5e5e3b;
+	background-color: #5E5E5E3B;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -129,8 +129,8 @@ footer {
 }
 
 div.fixedbutt {
-	background-color: rgb(53, 53, 53);
-	background-image: url('/source/images/vertalign.svg');
+	background-color: rgb(53 53 53);
+	background-image: url("/source/images/vertalign.svg");
 	background-repeat: no-repeat;
 	background-position: center;
 	position: fixed;
@@ -145,6 +145,6 @@ div.fixedbutt {
 	padding-right: var(--padding);
 }
 
-div.fixedbutt > a {color: #ffffff00; text-decoration: none;}
+div.fixedbutt > a {color: #FFFFFF00; text-decoration: none;}
 div.fixedbutt > a:visited {color: var(--color);}
 div.fixedbutt:hover {filter: brightness(1.8);}
