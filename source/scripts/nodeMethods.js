@@ -24,7 +24,7 @@ export class Packet{
 		this.distance = distance(fromPosition, toPosition);
 
 		// Compute the delay of the packet based on the length between nodes
-		this.delay = this.distance * globalThis.settings.network.speed;
+		this.delay = this.distance * globalThis.settings.network.delay;
 
 	}
 }
@@ -114,8 +114,8 @@ export class NodeData{
 	constructor(){
 		this.#address = newAddress();
 		this.#position = {
-			x: random(globalThis.settings.networkBoxRatio),
-			y: random(),
+			x: random("position", globalThis.settings.networkBoxRatio),
+			y: random("position"),
 		};
 
 		this.#addresses = new Map();
@@ -192,14 +192,19 @@ export class NodeData{
  *
  * This specific implementation of a number generator is called mulberry32.
  *
+ * @param context
  * @param {number} max - The maximum number allowed. (the minimum is always 0).
  *
  * @returns {number} - A random number between 0 and `max`.
  */
-export function random(max = 1){
-	globalThis.rs ??= globalThis.settings.seed;
+export function random(context, max = 1){
+	if(!context) throw Error("Context is needed");
+	globalThis.seeds ??= {};
+	const s = globalThis.seeds;
+	const c = context;
+	s[c] ??= globalThis.settings.seed;
 	/* eslint-disable-next-line */
-	let t; return max*((globalThis.rs=globalThis.rs+1831565813|0,t=Math.imul(globalThis.rs^globalThis.rs>>>15,1|globalThis.rs),t=t+Math.imul(t^t>>>7,61|t)^t,(t^t>>>14)>>>0)/2**32);
+	let t; return max*((s[c]=s[c]+1831565813|0,t=Math.imul(s[c]^s[c]>>>15,1|s[c]),t=t+Math.imul(t^t>>>7,61|t)^t,(t^t>>>14)>>>0)/2**32);
 }
 
 /**
@@ -209,7 +214,7 @@ export function randomColor(){
 	let color = "#";
 	for(let i = 0; i < 6; i++){
 		/* eslint-disable no-bitwise */
-		color += (random(16) | 0).toString(16);
+		color += (random("color", 16) | 0).toString(16);
 	}
 	return color;
 }
@@ -221,8 +226,8 @@ export function randomColor(){
  * @returns {number} - A new unique node address.
  */
 function newAddress(){
-	globalThis.rollingAddress ??= 0;
-	globalThis.rollingAddress++;
+	globalThis.rollingAddress ??= 0n;
+	globalThis.rollingAddress += 1n;
 	return globalThis.rollingAddress;
 }
 
