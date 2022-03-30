@@ -177,7 +177,7 @@ div.front {
 	margin-top: calc(var(--thickness) / -2);
 	border-radius: var(--thickness);
 	background-color: rgb(167 167 167);
-	opacity: 0.5;  
+	opacity: 0.5;
 	z-index: 50;
 	transition: opacity 0.5s ease-out;
 }
@@ -211,7 +211,7 @@ footer {
 
 div.fixedbutt {
 	background-color: rgb(53 53 53);
-	background-image: url("/source/images/vertalign.svg");
+	background-image: url("source/images/vertalign.svg");
 	background-repeat: no-repeat;
 	background-position: center;
 	position: fixed;
