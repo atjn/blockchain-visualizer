@@ -18,7 +18,7 @@
  * whereas the UI events are strictly designed to tell the UI what to draw on the screen, and when.
  */
 
-import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal } from "./nodeMethods.js";
+import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal, BlockChain } from "./nodeMethods.js";
 
 globalThis.timestamp = 0;
 
@@ -134,16 +134,22 @@ class EventQueue{
 					globalThis.nodes.get(event.packet.to),
 				);
 
-				const lastEnd = nodeData.blockchain.getEnds().at(-1);
-				if(lastEnd){
-					sendDrawEvent({
-						type: "nodeColor",
-						address: nodeData.address,
-						color: lastEnd.id,
-					});
-				}
+				const colors = nodeData.blockchain.getEnds().map(block => {
+					const { chain } = nodeData.blockchain.find(block);
+					let trust = 0;
+					for(const block of chain.blocks) trust += block.trust;
+					trust /= chain.blocks.length;
+					return {color: block.id, trust};
+				});
+				sendDrawEvent({
+					type: "nodeColor",
+					address: nodeData.address,
+					colors,
+				});
 
 				globalThis.nodes.update(nodeData);
+
+				this.#sendBlockchainEvents();
 
 				for(const packet of sendPackets){
 					this.enqueue(new NodeEvent(packet, globalThis.timestamp));
@@ -155,6 +161,114 @@ class EventQueue{
 
 		// Make it known that no instances of `dequeue` are running anymore
 		this.#dequeueing = false;
+	}
+
+	#lastAllBlocks = new Map();
+	#sendBlockchainEvents(){
+		const events = [];
+
+		const globalChain = new BlockChain({});
+		for(const nodeData of globalThis.nodes.values()){
+			for(const block of nodeData.blockchain){
+				globalChain.add(block);
+			}
+		}
+
+		const allBlocks = new Map();
+		const blockSizes = [20];
+		defineBlockPosition(globalChain, allBlocks, blockSizes);
+
+		/**
+		 * @param chain
+		 * @param allBlocks
+		 * @param blockSizes
+		 * @param scope
+		 */
+		function defineBlockPosition(chain, allBlocks, blockSizes, scope = {top: 0, height: 100, left: 0}){
+
+			blockSizes.push(scope.height);
+
+			for(const block of chain.blocks){
+				block.top = scope.top + (scope.height / 2);
+				block.left = scope.left;
+				scope.left++;
+
+				allBlocks.set(`${block.id}${block.previousId}${block.localId}`, block);
+			}
+
+			const newHeight = scope.height / chain.branches.length;
+			let newTop = scope.top;
+			for(const branch of chain.branches){
+				defineBlockPosition(
+					branch,
+					allBlocks,
+					blockSizes,
+					{
+						top: newTop,
+						height: newHeight,
+						left: scope.left,
+					},
+				);
+				newTop += newHeight;
+			}
+		}
+
+		const blockSize = Math.min(...blockSizes);
+		for(const [ key, block ] of allBlocks.entries()){
+			block.left *= blockSize;
+			block.left += blockSize;
+			allBlocks.set(key, block);
+		}
+
+		//console.log([...new Set([...allBlocks.keys(), ...this.#lastAllBlocks.keys()])]);
+		for(const key of [...new Set([...allBlocks.keys(), ...this.#lastAllBlocks.keys()])]){
+			const oldBlock = this.#lastAllBlocks.get(key);
+			const newBlock = allBlocks.get(key);
+
+			if(!newBlock){
+				events.push({
+					action: "remove",
+					id: oldBlock.id,
+				});
+			}else if(!oldBlock){
+				events.push({
+					action: "add",
+					id: newBlock.id,
+					trust: newBlock.trust,
+					top: newBlock.top,
+					left: newBlock.left,
+				});
+			}else{
+				let needsUpdate = false;
+				const updates = {};
+				for(const key of [ "trust", "top", "left" ]){
+					console.log(newBlock[key] !== oldBlock[key]);
+					if(newBlock[key] !== oldBlock[key]){
+						updates[key] = newBlock[key];
+						needsUpdate = true;
+					}
+				}
+
+				if(needsUpdate){
+					console.log("update");
+					events.push({
+						action: "update",
+						id: newBlock.id,
+						...updates,
+					});
+				}
+			}
+		}
+
+		if(events.length > 0){
+			sendDrawEvent({
+				type: "chainUpdate",
+				blockSize,
+				events,
+			});
+		}
+
+		this.#lastAllBlocks = allBlocks;
 	}
 }
 

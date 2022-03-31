@@ -140,7 +140,7 @@ div.front {
 
 #visualizer .network :is(.node, .packet) {
 	width: var(--size);
-	height: var(--size);
+	aspect-ratio: 1;
 	margin-left: calc(var(--size) / -2);
 	margin-top: calc(var(--size) / -2);
 	border-radius: var(--size);
@@ -185,6 +185,18 @@ div.front {
 	top: 72%;
 	height: 25vh;
 	background-color: rgb(119 119 119);
+}
+
+#visualizer .blockchain .block {
+	position: absolute;
+	width: calc(var(--block-size) * .9);
+	aspect-ratio: 1;
+	margin-left: calc(var(--block-size) / -2);
+	margin-top: calc(var(--block-size) / -2);
+	background-color: var(--id);
+	transition-property: top, left, height, width, margin;
+	transition-timing-function: ease-out;
+	transition-duration: .3s;
 }
 
 #controls {

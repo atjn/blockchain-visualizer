@@ -3,7 +3,7 @@
  * This is an implementation of the Bitcoin algorithm.
  */
 
-import { AddressPacket, BlockPacket, Block, BlockChain, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
+import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
 
 /**.
  * Takes a special input object with the node's local storage, along with a new
@@ -73,35 +73,19 @@ export async function process(packet, nodeData){
 
 	}else if(packet instanceof BlockPacket){
 
-		if(nodeData.blockchain.find(packet.block.id).index === -1){
+		console.log("received");
 
-			const { chain, index } = nodeData.blockchain.find(packet.block.previousId);
-			if(index !== -1){
-				const existingChain = [...chain.chain];
-				chain.chain = existingChain.slice(0, index);
-				chain.branches = [
-					new BlockChain({
-						chain: existingChain.slice(index),
-						branches: chain.branches,
-					}),
-					new BlockChain({
-						chain: [packet.block],
-					}),
-				];
-			}else{
-				nodeData.blockchain = new BlockChain({
-					branches: [
-						nodeData.blockchain,
-						new BlockChain({
-							chain: [packet.block],
-						}),
-					],
-				});
-			}
+		if(!nodeData.blockchain.has(packet.block)){
+
+			console.log("yir");
+
+			nodeData.blockchain.add(packet.block);
 
 			for(const address of nodeData.allAddressKeys){
 				sendPackets.push(new BlockPacket(address, nodeData.address, packet.block));
 			}
+		}else{
+			console.log("got it");
 		}
 
 	}else if(packet instanceof NewBlockSignal){
@@ -114,18 +98,18 @@ export async function process(packet, nodeData){
 
 			let bestBlock;
 			for(const block of ends){
-				if(block.trust > (bestBlock?.trust || 0)){
+				if(block.trust >= (bestBlock?.trust || 0)){
 					bestBlock = block;
 				}
 			}
 			const { chain } = nodeData.blockchain.find(bestBlock);
 
 			block = new Block(bestBlock.id);
-			chain.chain.push(block);
+			chain.blocks.push(block);
 
 		}else{
-			block = new Block(0);
-			nodeData.blockchain.chain.push(block);
+			block = new Block();
+			nodeData.blockchain.blocks.push(block);
 		}
 
 		for(const address of nodeData.allAddressKeys){
@@ -133,6 +117,8 @@ export async function process(packet, nodeData){
 		}
 
 	}
+
+	updateBlockTrustLevels(nodeData);
 
 	for(const packet of sendPackets){
 		const peerData = nodeData.getAddress(packet.to);
@@ -150,4 +136,27 @@ export async function process(packet, nodeData){
 	}
 
 	return {nodeData, sendPackets};
+}
+
+/**
+ * @param nodeData
+ */
+function updateBlockTrustLevels(nodeData){
+
+	for(const block of nodeData.blockchain) block.trust = 0;
+
+	let trust = 0;
+	const trustIncrease = .1;
+	for(const end of nodeData.blockchain.getEnds()){
+		let block = end;
+		while(block.previousId !== undefined){
+			trust = Math.min(1, trust + trustIncrease);
+			const { chain, localIndex } = nodeData.blockchain.find(block.previousId);
+
+			chain.blocks[localIndex].trust = Math.max(chain.blocks[localIndex].trust, trust);
+
+			block = chain.blocks[localIndex];
+
+		}
+	}
 }

@@ -347,28 +347,204 @@ export class PeerData{
 }
 
 export class BlockChain{
-	constructor({ chain = [], branches = [] }){
-		this.chain = chain;
-		this.branches = branches;
+	constructor({ blocks = [], branches = [] }){
+		this.blocks = blocks.map(this.#newBlock);
+		this.branches = branches.map(branch => branch.copy());
 	}
-	chain = [];
+	blocks = [];
 	branches = [];
 
-	find(id){
+	copy(){
+		return new BlockChain(this);
+	}
 
-		if(typeof id === "object"){
-			id = id.id;
+	#newBlock(block){
+		const newBlock = structuredClone(block);
+		newBlock.localId = crypto.randomUUID();
+		return newBlock;
+	}
+
+	add(block){
+		const newBlock = this.#newBlock(block);
+
+		/**
+		 * Just lazily throw the new block into a new base branch,
+		 * and let `tidy()` connect the block and clean up properly.
+		 */
+		this.branches = [
+			new BlockChain({
+				blocks: this.blocks,
+				branches: this.branches,
+			}),
+			new BlockChain({
+				blocks: [newBlock],
+			}),
+		];
+		this.blocks = [];
+
+		this.tidy();
+
+	}
+
+	/**
+	 * Makes sure that all blocks are correctly connected in all possible branch combinations.
+	 * Also removes bloat like empty or duplicated branches.
+	 */
+	tidy(){
+		let effect = false;
+
+		/**
+		 * Remove chains that contain no blocks.
+		 */
+		for(const { indexes, chain: branch } of this.branchEntries()){
+			if(branch.blocks.length === 0 && branch.branches.length === 0){
+
+				let scope = this;
+				for(const index of indexes.slice(0, -1)) scope = scope.branches[index];
+
+				scope.branches.splice(indexes.at(-1), 1);
+
+				effect = true;
+				break;
+			}
 		}
 
-		const index = this.chain.findIndex(block => block.id === id);
-		if(index !== -1) return { chain: this, index };
+		/**
+		 * Remove unneccessary branching points that only branch out to one branch.
+		 */
+		for(const { chain: branch } of this.branchEntries()){
+			if(branch.branches.length === 1){
+				branch.blocks.push(...branch.branches[0].blocks);
+				branch.branches = branch.branches[0].branches;
 
+				effect = true;
+			}
+		}
+
+		/**
+		 * Connect blocks that point to each other, but haven't been connected.
+		 * This creates new branches that duplicate already existing information, but it is important
+		 * to be aware of every possible branch.
+		 */
+		for(const { chain, localIndex, block } of this.entries()){
+			const branches = Boolean(localIndex === chain.blocks.length - 1);
+
+			/**
+			 * Save the ID's of all branches that already exist.
+			 */
+			const currentBranches = new Set();
+			if(branches){
+				for(const branch of chain.branches){
+					if(branch.blocks.length === 0) continue;
+					const currentBranch = branch.blocks[0];
+					currentBranches.set(currentBranch.id);
+				}
+			}else{
+				const currentBranch = chain.blocks[localIndex + 1];
+				currentBranches.set(`${currentBranch.id}${currentBranch.previousId}`);
+			}
+
+			/**
+			 * If a new branch is found that doesn't already exist, then add that branch.
+			 */
+			for(const possibleBranch of this.findAll({previousId: block.id})){
+				if(!currentBranches.has(possibleBranch.block.id)){
+					const newChain = new BlockChain({
+						blocks: possibleBranch.chain.blocks.slice(possibleBranch.localIndex),
+						branches: possibleBranch.chain.branches,
+					});
+					if(branches){
+						chain.branches.push(newChain);
+					}else{
+						chain.branches = [
+							new BlockChain({
+								blocks: chain.blocks.slice(localIndex),
+								branches: chain.branches,
+							}),
+							newChain,
+						];
+						chain.blocks = chain.block.slice(0, localIndex);
+					}
+					effect = true;
+				}
+			}
+
+		}
+
+		/**
+		 * If there are any branches without a complete base path,
+		 * which contain blocks that are also present elsewhere,
+		 * then remove those blocks from these branches.
+		 */
 		for(const branch of this.branches){
-			const branchResult = branch.find(id);
-			if(branchResult.index !== -1) return branchResult;
+			if(branch.blocks.length === 0 || branch.blocks[0].previousId === undefined) continue;
+
+			let index = -1;
+			let foundElsewhere = true;
+			while(index + 1 < branch.blocks.length && foundElsewhere){
+				const block = branch.blocks[index + 1];
+				if(this.has(block)){
+					index++;
+				}else{
+					foundElsewhere = false;
+				}
+			}
+
+			if(index > -1){
+				branch.blocks.splice(0, index);
+				effect = true;
+			}
 		}
 
-		return {chain: undefined, index: -1};
+		/**
+		 * Find identical branches connected to the same root and deduplicate them.
+		 */
+		if(combineBranches(this)) effect = true;
+		/**
+		 * @param chain
+		 */
+		function combineBranches(chain){
+			let effect = false;
+			let didCombineBranches;
+			do{
+				didCombineBranches = false;
+				combineBranchesLoop: for(const [ index, branch ] of chain.branches.entries()){
+					if(branch.blocks.length === 0 && branch.branches.length === 0){
+						chain.branches.splice(index, 1);
+
+						didCombineBranches = true;
+						break combineBranchesLoop;
+					}
+
+					for(const [ otherIndex, otherBranch ] of chain.branches.entries()){
+						if(index > otherIndex) continue;
+						let blockIndex = 0;
+						while(branch.blocks[blockIndex]?.id === otherBranch.blocks[0]?.id){
+							otherBranch.blocks.unshift();
+							blockIndex++;
+						}
+						if(blockIndex > 0){
+
+							branch.branches.push(chain.branches.splice(otherIndex, 1));
+
+							didCombineBranches = true;
+							break combineBranchesLoop;
+						}
+					}
+				}
+				if(didCombineBranches) effect = true;
+			}while(didCombineBranches);
+
+			for(const branch of chain.branches) if(combineBranches(branch)) effect = true;
+
+			return effect;
+		}
+
+		/**
+		 * If any of these checks changed the blockchain, then run it again to make sure
+		 * that previous checks are still passing.
+		 */
+		if(effect) this.tidy();
 	}
 
 	getEnds(){
@@ -381,10 +557,121 @@ export class BlockChain{
 				ends.push(...branch.getEnds());
 			}
 
-		}else if(this.chain.length > 0){
-			ends.push(this.chain.at(-1));
+		}else if(this.blocks.length > 0){
+			ends.push(this.blocks.at(-1));
 		}
 
 		return ends;
+	}
+
+	/**
+	 * Finds the block with the given local identifier.
+	 *
+	 * @param {string | Block} localId - The previous id pointer of the block to find.
+	 * @returns {object} - A list of entries of blocks that fit the description.
+	 */
+	find(localId){
+
+		if(typeof localId === "object"){
+			localId = localId.localId;
+		}
+
+		for(const entry of this.entries()){
+			if(localId === entry.block.localId){
+				return entry;
+			}
+		}
+
+		return {};
+	}
+
+	/**
+	 * Finds all blocks in the blockchain that fits the given identifiers.
+	 * All identifiers are optional. If none are defined, this will return all blocks in the blockchain.
+	 *
+	 * @param {object | Block} param0 - An object containing the necessary identifiers. Compatible with a Block class.
+	 * @param {string} param0.id - The id of the block to find.
+	 * @param {string} param0.previousId - The previous id pointer of the block to find.
+	 * @returns {Array<object>} - A list of entries of blocks that fit the description.
+	 */
+	*findAll({ id = null, previousId = null }){
+
+		for(const entry of this.entries()){
+			if(
+				( id === null || entry.block.id === id ) &&
+				( previousId === null || entry.block.previousId === previousId )
+			){
+				yield entry;
+			}
+		}
+	}
+
+	/**
+	 * Finds all blocks in the blockchain that fits the given identifiers.
+	 * All identifiers are optional. If none are defined, this will return all blocks in the blockchain.
+	 *
+	 * @param {object | Block} param0 - An object containing the necessary identifiers. Compatible with a Block class.
+	 * @param {string} param0.id - The id of the block to find.
+	 * @param {string} param0.previousId - The previous id pointer of the block to find.
+	 * @param block
+	 * @returns {boolean} - A list of entries of blocks that fit the description.
+	 */
+	has(block){
+
+		if([...this.findAll(block)].length > 0) return true;
+
+		return false;
+	}
+
+	*entries(){
+
+		let globalIndex = 0;
+		for(const [ index, block ] of this.blocks.entries()){
+			yield {
+				chainIndexes: [],
+				chain: this,
+				globalIndex,
+				localIndex: index,
+				block,
+			};
+			globalIndex++;
+		}
+
+		for(const branchEntry of this.branchEntries()){
+			if(branchEntry.indexes.length === 0) continue;
+
+			for(const blockEntry of branchEntry.branch.entries()){
+				blockEntry.globalIndex += globalIndex;
+				yield { ...branchEntry, ...blockEntry };
+			}
+		}
+
+	}
+
+	*branchEntries(){
+
+		yield { indexes: [], chain: this };
+
+		for(const [ index, branch ] of this.branches.entries()){
+			for(const entry of branch.branchEntries()){
+				entry.indexes.shift(index);
+				yield entry;
+			}
+		}
+
+	}
+
+	*values(){
+		for(const block of this) yield block;
+	}
+
+	*[Symbol.iterator](){
+
+		for(const block of this.blocks) yield block;
+
+		for(const branch of this.branches){
+			for(const block of branch) yield block;
+		}
+
 	}
 }

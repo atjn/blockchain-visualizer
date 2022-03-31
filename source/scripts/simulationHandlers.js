@@ -301,7 +301,9 @@ export class EventDrawer{
 
 	#nodes = new Map();
 	#connections = new Map();
+	#blocks = new Map();
 	#networkBox = document.querySelector("#visualizer .network");
+	#chainBox = document.querySelector("#visualizer .blockchain");
 
 	/**
 	 * This function is called to take a UI draw event and create the actual DOM elements displayed on screen, according to the event.
@@ -328,8 +330,21 @@ export class EventDrawer{
 			case "nodeColor": {
 
 				const node = this.#nodes.get(event.address);
-				node.style.setProperty("--color", event.color);
 
+				let combinedTrust = 0;
+				for(const color of event.colors) combinedTrust += color.trust;
+				const ratio = combinedTrust > 0 ? 360 / combinedTrust : 0;
+
+				const gradients = [];
+				let trustDegrees = 0;
+				for(const color of event.colors){
+					const start = trustDegrees * ratio;
+					trustDegrees += color.trust;
+					const end = trustDegrees * ratio;
+					gradients.push(`${color.color} ${start}deg ${end}deg`);
+				}
+
+				node.style.background = `conic-gradient(${gradients.join(",")})`;
 				break;
 			}
 			case "connection": {
@@ -390,10 +405,57 @@ export class EventDrawer{
 					packet.style.top = `${position.y * 100}%`;
 					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
 				}, 1, packet, event.position.to);
-				setTimeout(packet => {packet.remove();}, delay + 1000, packet);
+				setTimeout(packet => packet.remove(), delay + 1000, packet);
 
 				break;
 			}
+			case "chainUpdate": {
+
+				this.#updateChain(event);
+
+			}
 		}
+	}
+
+	#updateChain(event){
+
+		this.#chainBox.style.setProperty("--block-size", `${event.blockSize}%`);
+
+		for(const blockEvent of event.events){
+			switch(blockEvent.action){
+				case "remove": {
+					const block = this.#blocks.get(blockEvent.id);
+					block.remove();
+					this.#blocks.delete(blockEvent.id);
+					break;
+				}
+				case "add": {
+					const block = document.createElement("div");
+					block.classList.add("block");
+					block.style.setProperty("--id", blockEvent.id);
+					block.style.setProperty("--trust", blockEvent.trust);
+					block.style.top = `${blockEvent.top}%`;
+					block.style.left = `${blockEvent.left}%`;
+					this.#chainBox.appendChild(block);
+					this.#blocks.set(blockEvent.id, block);
+					break;
+				}
+				case "update": {
+					const block = this.#blocks.set(blockEvent.id);
+					console.log(block);
+					if(blockEvent.trust !== undefined){
+						block.style.setProperty("--trust", blockEvent.trust);
+					}
+					if(blockEvent.top !== undefined){
+						block.style.top = `${blockEvent.top}%`;
+					}
+					if(blockEvent.left !== undefined){
+						block.style.left = `${blockEvent.left}%`;
+					}
+					break;
+				}
+			}
+		}
+
 	}
 }
