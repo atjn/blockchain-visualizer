@@ -7,5 +7,5 @@
 const isProduction = false;
 
 if(isProduction && window.location.pathname.length < 2 && "serviceWorker" in navigator){
-	navigator.serviceWorker.register("/public/serviceworker.js");
+	navigator.serviceWorker.register("serviceworker.js");
 }

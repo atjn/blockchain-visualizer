@@ -18,6 +18,7 @@
       style-src 'self';
       script-src 'self';
       img-src 'self';
+      font-src 'self';
       manifest-src 'self';
       connect-src 'self';
       frame-ancestors 'none';
