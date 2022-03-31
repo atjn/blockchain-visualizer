@@ -112,12 +112,13 @@ function generateFolderStructure(map, prefix = ""){
 	}
 	return structure;
 }
+structure.push("/");
 
 const sw_path = path.join(site_root, mainOutput, "serviceworker.js");
 fs.writeFileSync(
 	sw_path,
 	fs.readFileSync(sw_path, "utf-8")
-		.replaceAll("!build_insert_hash!", `cache-${map.hash}}`)
+		.replaceAll("!build_insert_hash!", `cache-${map.hash}`)
 		.replaceAll("\"!build_insert_map!\"", JSON.stringify(structure)),
 );
 
