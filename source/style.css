@@ -32,7 +32,7 @@ body {
 	margin: 0;
 	padding: 0;
 	border: 0;
-	background: #181818;
+	background: #2E2E2E;
 	color: rgb(255 255 255);
 }
 
@@ -112,7 +112,7 @@ div.front {
 #visualizer {
 	position: relative;
 	margin-top: 1vh;
-	top: 2vh;
+	top: 3vh;
 	height: 98vh;
 	left: 2%;
 	width: 96%;
@@ -229,7 +229,9 @@ div.fixedbutt {
 div.fixedbutt > a {color: #FFFFFF00; text-decoration: none;}
 div.fixedbutt > a:visited {color: var(--color);}
 div.fixedbutt:hover {filter: brightness(1.8);}
-.sidebar {
+
+
+#controls-pane {
 	flex: 1 1 0;
 	max-width: 300px;
 	padding: 2rem 1rem;
@@ -237,11 +239,11 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	position: fixed;
 	top: 0;
 	left: 0;
-	height: 20000px;
-	z-index: 1000;
+	height: 100vh;
+	z-index: 200;
 }
 
-.sidebar h3 {
+#controls-pane h3 {
 	color: bisque;
 	font-size: 0.75rem;
 	text-transform: uppercase;
@@ -249,4 +251,14 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	position: center;
 	top: 0;
 	left: 0;
+}
+
+button#showHide {
+	position: absolute;
+	border: 0;
+	padding-left: 10px;
+	padding-right: 10px;
+	z-index: 199;
+	margin-left: 40%;
+	margin-top: 0;
 }

@@ -16,25 +16,22 @@
 		<link rel="stylesheet" href="style.css">
 		<script src="scripts/ui.js" type="module"></script>
 	</head>
+
 	<body>
 		<h1>Blockchain Visualizer</h1>
 		<main>
 
-				<aside class="sidebar">
+			<aside id="controls-pane">
+				<h3>Settings</h3>
 
-					<h3>Settings</h3>
+				<div id="controls">
+					<button type="button" id="play" class="paused">Play</button>
+					<button type="button" name="reset" id="reset" class="paused">Reset</button>
+					<input type="range" name="timeline" id="timeline" step="100" min="0">
+					<output></output>
+				</div>
+			</aside>
 
-
-
-					<div id="controls">
-            <button type="button" id="play" class="paused">Play</button>
-            <button type="button" name="reset" id="reset" class="paused">Reset</button>
-				    <input type="range" name="timeline" id="timeline" step="100" min="0">
-				    <output></output>
-
-					</div>
-
-				</aside>
 			<div class="front">
 				<p>
 					This project set out to interactively visualize the differences and similarities in different block propagation algorithms to improve the intuitive understanding of blockchains.
@@ -48,13 +45,20 @@
 			</div>
 
 			<div class="fixedbutt">
-				<a href="#visualizer">XX</a>
+				<a href="#showHide">XX</a>
 			</div>
+
+
+			<button type="button" id="showHide">Settings</button>
+
+
 
 			<div id="visualizer">
 				<div class="network"></div>
 				<div class="blockchain"></div>
 			</div>
+
+
 
 			<div class="front">
 				<h2>Why Blockchains?</h2>
