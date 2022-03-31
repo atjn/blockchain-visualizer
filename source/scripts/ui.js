@@ -931,18 +931,16 @@ generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElem
 
 
 const showAndHideButton = document.getElementById("showHide");
-	const sidebar = document.getElementById("sidebar");
-	sidebar.style.display = 'none';
+const sidebar = document.getElementById("sidebar");
+sidebar.style.display = "none";
 
-showAndHideButton.addEventListener("click", event => {
-	let element = document.getElementById("sidebar");
+showAndHideButton.addEventListener("click", () => {
+	const element = document.getElementById("sidebar");
 
-
-	if (element.style.display != 'inline'){
-		element.style.display = 'inline';
-	}
-	else {
-		element.style.display = 'none';
+	if (element.style.display !== "inline"){
+		element.style.display = "inline";
+	} else {
+		element.style.display = "none";
 	}
 
-})
+});
