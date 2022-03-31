@@ -5,15 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "lint:js": "eslint \"**/*.js\" --fix",
-    "lint:js:nofix": "eslint \"**/*.js\"",
+    "lint:js": "eslint \"*.js\" --fix && eslint \"source/**/*.js\" --fix",
+    "lint:js:nofix": "eslint \"*.js\" && eslint \"source/**/*.js\"",
     "lint:css": "stylelint \"source/**/*.css\" --fix",
     "lint:css:nofix": "stylelint \"source/**/*.css\"",
     "lint:html": "html-validate \"source/**/*.html\"",
     "lint:html:nofix": "npm run lint:html",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
     "lint:nofix": "npm run lint:js:nofix && npm run lint:css:nofix && npm run lint:html:nofix",
-    "test": "npm install && npm run lint:nofix"
+    "test": "npm install && npm run lint:nofix",
+    "build": "node build.js"
   },
   "repository": {
     "type": "git",
@@ -32,10 +33,13 @@
   "homepage": "https://github.com/atjn/blockchain-visualizer#readme",
   "devDependencies": {
     "@atjn/eslint-config": "^4.1.0",
-    "@atjn/stylelint-config": "^2.0.0",
     "@atjn/htmlvalidate-config": "^3.0.0",
-    "eslint": "^8.9.0",
-    "stylelint": "^14.5.1",
-    "html-validate": "^6.4.0"
+    "@atjn/stylelint-config": "^2.0.0",
+    "eslint": "^8.12.0",
+    "folder-hash": "^4.0.2",
+    "fs-extra": "^10.0.1",
+    "html-validate": "^6.6.1",
+    "minify": "^8.0.4",
+    "stylelint": "^14.6.1"
   }
 }
