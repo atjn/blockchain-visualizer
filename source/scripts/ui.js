@@ -926,3 +926,21 @@ globalThis.timeline = new Timeline();
  * but as a side product also generates the initial `globalThis.settings`, which in turn starts the simulation.
  */
 generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElementById("controls"));
+
+
+
+
+const showAndHideButton = document.getElementById("showHide");
+const controlsPane = document.getElementById("controls-pane");
+controlsPane.style.display = "none";
+
+showAndHideButton.addEventListener("click", () => {
+	const controlsPane = document.getElementById("controls-pane");
+
+	if (controlsPane.style.display !== "inline"){
+		controlsPane.style.display = "inline";
+	} else {
+		controlsPane.style.display = "none";
+	}
+
+});
