@@ -1,6 +1,7 @@
 /**
  * @file
  * This serviceworker file handles caching of the webapp.
+ * It is pretty basic and has a lot of shortcomings, but it sure works :)
  */
 
 const currentCacheName = "!build_insert_hash!";

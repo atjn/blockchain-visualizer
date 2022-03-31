@@ -13,7 +13,7 @@
     "lint:html:nofix": "npm run lint:html",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
     "lint:nofix": "npm run lint:js:nofix && npm run lint:css:nofix && npm run lint:html:nofix",
-    "test": "npm install && npm run lint:nofix",
+    "test": "npm install && npm run lint:nofix && npm run build",
     "build": "node build.js"
   },
   "repository": {
