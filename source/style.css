@@ -231,7 +231,7 @@ div.fixedbutt > a:visited {color: var(--color);}
 div.fixedbutt:hover {filter: brightness(1.8);}
 
 
-.sidebar {
+#controls-pane {
 	flex: 1 1 0;
 	max-width: 300px;
 	padding: 2rem 1rem;
@@ -243,7 +243,7 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	z-index: 200;
 }
 
-.sidebar h3 {
+#controls-pane h3 {
 	color: bisque;
 	font-size: 0.75rem;
 	text-transform: uppercase;

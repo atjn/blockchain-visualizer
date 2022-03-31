@@ -16,30 +16,22 @@
 		<link rel="stylesheet" href="style.css">
 		<script src="scripts/ui.js" type="module"></script>
 		<script src="scripts/aside.js" type="module"></script>
-
-
-
 	</head>
+
 	<body>
 		<h1>Blockchain Visualizer</h1>
 		<main>
 
-			<div id="sidebar">
-				<aside class="sidebar">
-					<h3>Settings</h3>
+			<aside id="controls-pane">
+				<h3>Settings</h3>
 
-					<div id="controls">
-						<button type="button" id="play" class="paused">Play</button>
-						<button type="button" name="reset" id="reset" class="paused">Reset</button>
-						<input type="range" name="timeline" id="timeline" step="100" min="0">
-				    	<output></output>
-					</div>
-				</aside>
-			</div>
-
-
-
-
+				<div id="controls">
+					<button type="button" id="play" class="paused">Play</button>
+					<button type="button" name="reset" id="reset" class="paused">Reset</button>
+					<input type="range" name="timeline" id="timeline" step="100" min="0">
+					<output></output>
+				</div>
+			</aside>
 
 			<div class="front">
 				<p>
