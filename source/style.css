@@ -229,6 +229,8 @@ div.fixedbutt {
 div.fixedbutt > a {color: #FFFFFF00; text-decoration: none;}
 div.fixedbutt > a:visited {color: var(--color);}
 div.fixedbutt:hover {filter: brightness(1.8);}
+
+
 .sidebar {
 	flex: 1 1 0;
 	max-width: 300px;
@@ -237,7 +239,7 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	position: fixed;
 	top: 0;
 	left: 0;
-	height: 20000px;
+	height: 100vh;
 	z-index: 200;
 }
 
@@ -251,12 +253,12 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	left: 0;
 }
 
-button.button {
+button#showHide {
 	position: absolute;
 	border: 0;
 	padding-left: 10px;
 	padding-right: 10px;
 	z-index: 199;
-	margin-left: 2%;
+	margin-left: 40%;
 	margin-top: 0;
 }

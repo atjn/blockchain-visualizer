@@ -15,8 +15,10 @@
 		<link rel="manifest" href="manifest.json">
 		<link rel="stylesheet" href="style.css">
 		<script src="scripts/ui.js" type="module"></script>
+		<script src="scripts/aside.js" type="module"></script>
 
-		<script src="scripts/aside.js"></script>
+
+
 	</head>
 	<body>
 		<h1>Blockchain Visualizer</h1>
@@ -24,20 +26,14 @@
 
 			<div id="sidebar">
 				<aside class="sidebar">
-
 					<h3>Settings</h3>
-					<button onclick="showAndHide()">X</button>
-
-
 
 					<div id="controls">
-            <button type="button" id="play" class="paused">Play</button>
-            <button type="button" name="reset" id="reset" class="paused">Reset</button>
-				    <input type="range" name="timeline" id="timeline" step="100" min="0">
-				    <output></output>
-
+						<button type="button" id="play" class="paused">Play</button>
+						<button type="button" name="reset" id="reset" class="paused">Reset</button>
+						<input type="range" name="timeline" id="timeline" step="100" min="0">
+				    	<output></output>
 					</div>
-
 				</aside>
 			</div>
 
@@ -60,11 +56,18 @@
 			<div class="fixedbutt">
 				<a href="#gohere">XX</a>
 			</div>
-			<button id="gohere" class="button" onclick="showAndHide()">Settings</button>
+
+
+			<button type="button" id="showHide">Settings</button>
+
+
+
 			<div id="visualizer">
 				<div class="network"></div>
 				<div class="blockchain"></div>
 			</div>
+
+
 
 			<div class="front">
 				<h2>Why Blockchains?</h2>
