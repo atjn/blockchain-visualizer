@@ -23,6 +23,7 @@ import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simu
  *	}
  *
  */
+
 globalThis.settings = {};
 const allInputs = {
 	network: {
@@ -930,7 +931,7 @@ generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElem
 
 
 
-const showAndHideButton = document.getElementById("showHide");
+const showAndHideButton = document.getElementById("showHideSettings");
 
 showAndHideButton.addEventListener("click", () => {
 	const controlsPane = document.getElementById("controls-pane");
