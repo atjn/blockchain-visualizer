@@ -932,15 +932,18 @@ generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElem
 
 const showAndHideButton = document.getElementById("showHide");
 const controlsPane = document.getElementById("controls-pane");
-controlsPane.style.display = "none";
+
 
 showAndHideButton.addEventListener("click", () => {
 	const controlsPane = document.getElementById("controls-pane");
 
-	if (controlsPane.style.display !== "inline"){
-		controlsPane.style.display = "inline";
-	} else {
-		controlsPane.style.display = "none";
+	if (controlsPane.classList.contains("closed")){
+		controlsPane.classList.remove("closed");
+		controlsPane.classList.add("open");
+	}
+	else {
+		controlsPane.classList.remove("open");
+		controlsPane.classList.add("closed");
 	}
 
 });

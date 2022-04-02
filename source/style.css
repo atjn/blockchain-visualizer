@@ -231,17 +231,36 @@ div.fixedbutt > a:visited {color: var(--color);}
 div.fixedbutt:hover {filter: brightness(1.8);}
 
 
-#controls-pane {
-	flex: 1 1 0;
+#controls-pane.open {
+
 	max-width: 300px;
 	padding: 2rem 1rem;
 	background-color: #2E3047;
 	position: fixed;
 	top: 0;
-	left: 0;
 	height: 100vh;
 	z-index: 200;
 }
+
+#controls-pane.closed {
+	position: fixed;
+	max-width: 300px;
+	padding: 2rem 1rem;
+	background-color: #115204;
+	top: 0;
+	left: -300px;
+	height: 100vh;
+	z-index: 200;
+}
+
+
+
+
+
+
+
+
+
 
 #controls-pane h3 {
 	color: bisque;
@@ -254,11 +273,8 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 }
 
 button#showHide {
-	position: absolute;
-	border: 0;
-	padding-left: 10px;
-	padding-right: 10px;
-	z-index: 199;
-	margin-left: 40%;
-	margin-top: 0;
+	position: relative;
+	display: inline;
+	right: -300px;
+	height: 50px;
 }
