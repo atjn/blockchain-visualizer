@@ -25,7 +25,6 @@
 * {
 	box-sizing: border-box;
 	font-family: "Space Mono", monospace;
-
 }
 
 body {
@@ -192,8 +191,6 @@ div.front {
 	background-color: rgb(197 197 197 / 0.158);
 	border-top: 1px solid #FFFFFF;
 	border-bottom: 1px solid #FFFFFF;
-
-	height: 13vh;
 	padding: 1vh;
 }
 
@@ -208,28 +205,6 @@ footer {
 	justify-content: center;
 	height: 10vh;
 }
-
-div.fixedbutt {
-	background-color: rgb(53 53 53);
-	background-image: url("images/vertical_align.svg");
-	background-repeat: no-repeat;
-	background-position: center;
-	position: fixed;
-	z-index: 999;
-	top: 3vh;
-	right: 3vw;
-	border: 1px solid white;
-
-	--padding: 5px;
-	padding: 3px;
-	padding-left: var(--padding);
-	padding-right: var(--padding);
-}
-
-div.fixedbutt > a {color: #FFFFFF00; text-decoration: none;}
-div.fixedbutt > a:visited {color: var(--color);}
-div.fixedbutt:hover {filter: brightness(1.8);}
-
 
 #controls-pane.open {
 
@@ -253,16 +228,7 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	z-index: 200;
 }
 
-
-
-
-
-
-
-
-
-
-#controls-pane h3 {
+h3#controls-pane {
 	color: bisque;
 	font-size: 0.75rem;
 	text-transform: uppercase;
@@ -273,8 +239,28 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 }
 
 button#showHide {
+	background-color: #2E2E2E;
+	color: #FFFFFF;
 	position: relative;
 	display: inline;
-	right: -300px;
-	height: 50px;
+	top: -90px;
+	right: -290px;
+
 }
+
+button#showHide:hover {background-color: rgba(84, 92, 204);}
+
+#vertalignbutton {
+	background-image: url("images/vertical_align.svg");
+	background-repeat: no-repeat;
+	background-position: center;
+	position: fixed;
+	z-index: 999;
+	top: 1vh;
+	right: 0.5vw;
+	width: 40px;
+	height: 40px;
+	background-color: #2E2E2E;
+	}
+
+	#vertalignbutton:hover {background-color: rgba(84, 92, 204);}
