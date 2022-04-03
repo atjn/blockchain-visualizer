@@ -20,7 +20,6 @@
 
 import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal, BlockChain } from "./nodeMethods.js";
 
-globalThis.timestamp = 0;
 
 /**
  * Handles messages being sent by the UI.
@@ -104,12 +103,12 @@ class EventQueue{
 		// If another version already runs, quit instantly. Otherwise make it known that this isntance is now running.
 		if(this.#dequeueing) return;
 		this.#dequeueing = true;
-		this.#dequeueStartTime = globalThis.timestamp;
+		this.#dequeueStartTime = Date.now();
 
 		// Go through every event in the queue (as long as the simulation isn't paused)
 		while(this.#events.length > 0 && globalThis.settings.run){
 
-			if(globalThis.timestamp - this.#dequeueStartTime > this.#maxDequeueTime){
+			if(Date.now() - this.#dequeueStartTime > this.#maxDequeueTime){
 				setTimeout(() => {globalThis.eventQueue.dequeue();}, 1);
 				break;
 			}
@@ -228,12 +227,13 @@ class EventQueue{
 			if(!newBlock){
 				events.push({
 					action: "remove",
-					id: oldBlock.id,
+					localId: oldBlock.localId,
 				});
 			}else if(!oldBlock){
 				events.push({
 					action: "add",
 					id: newBlock.id,
+					localId: newBlock.localId,
 					trust: newBlock.trust,
 					top: newBlock.top,
 					left: newBlock.left,
@@ -242,7 +242,6 @@ class EventQueue{
 				let needsUpdate = false;
 				const updates = {};
 				for(const key of [ "trust", "top", "left" ]){
-					console.log(newBlock[key] !== oldBlock[key]);
 					if(newBlock[key] !== oldBlock[key]){
 						updates[key] = newBlock[key];
 						needsUpdate = true;
@@ -250,10 +249,9 @@ class EventQueue{
 				}
 
 				if(needsUpdate){
-					console.log("update");
 					events.push({
 						action: "update",
-						id: newBlock.id,
+						localId: newBlock.localId,
 						...updates,
 					});
 				}

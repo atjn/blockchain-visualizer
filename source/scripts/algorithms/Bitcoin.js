@@ -73,19 +73,15 @@ export async function process(packet, nodeData){
 
 	}else if(packet instanceof BlockPacket){
 
-		console.log("received");
-
 		if(!nodeData.blockchain.has(packet.block)){
 
-			console.log("yir");
-
 			nodeData.blockchain.add(packet.block);
+
+			if(!nodeData.blockchain.has(packet.block)) console.log("whoops");
 
 			for(const address of nodeData.allAddressKeys){
 				sendPackets.push(new BlockPacket(address, nodeData.address, packet.block));
 			}
-		}else{
-			console.log("got it");
 		}
 
 	}else if(packet instanceof NewBlockSignal){
@@ -109,7 +105,7 @@ export async function process(packet, nodeData){
 
 		}else{
 			block = new Block();
-			nodeData.blockchain.blocks.push(block);
+			nodeData.blockchain.add(block);
 		}
 
 		for(const address of nodeData.allAddressKeys){
@@ -153,9 +149,12 @@ function updateBlockTrustLevels(nodeData){
 			trust = Math.min(1, trust + trustIncrease);
 			const { chain, localIndex } = nodeData.blockchain.find(block.previousId);
 
-			chain.blocks[localIndex].trust = Math.max(chain.blocks[localIndex].trust, trust);
-
-			block = chain.blocks[localIndex];
+			if(chain){
+				chain.blocks[localIndex].trust = Math.max(chain.blocks[localIndex].trust, trust);
+				block = chain.blocks[localIndex];
+			}else{
+				break;
+			}
 
 		}
 	}

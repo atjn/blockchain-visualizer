@@ -424,9 +424,12 @@ export class EventDrawer{
 		for(const blockEvent of event.events){
 			switch(blockEvent.action){
 				case "remove": {
-					const block = this.#blocks.get(blockEvent.id);
-					block.remove();
-					this.#blocks.delete(blockEvent.id);
+					console.log(blockEvent);
+					const block = this.#blocks.get(blockEvent.localId);
+					if(block){
+						block?.remove();
+						this.#blocks.delete(blockEvent.localId);
+					}
 					break;
 				}
 				case "add": {
@@ -437,12 +440,11 @@ export class EventDrawer{
 					block.style.top = `${blockEvent.top}%`;
 					block.style.left = `${blockEvent.left}%`;
 					this.#chainBox.appendChild(block);
-					this.#blocks.set(blockEvent.id, block);
+					this.#blocks.set(blockEvent.localId, block);
 					break;
 				}
 				case "update": {
-					const block = this.#blocks.set(blockEvent.id);
-					console.log(block);
+					const block = this.#blocks.set(blockEvent.localId);
 					if(blockEvent.trust !== undefined){
 						block.style.setProperty("--trust", blockEvent.trust);
 					}
