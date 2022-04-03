@@ -7,13 +7,19 @@
 			"src": "images/logo.svg",
 			"type": "image/svg+xml",
 			"sizes": "any",
-      "purpose": "any"
+			"purpose": "any"
+		},
+    	{
+			"src": "images/logo_dark_512.png",
+			"type": "image/png",
+			"sizes": "512x512",
+			"purpose": "any"
 		},
 		{
 			"src": "images/logo_dark_maskable_512.png",
 			"type": "image/png",
 			"sizes": "512x512",
-      "purpose": "maskable"
+			"purpose": "maskable"
 		}
 	],
 	"start_url": "index.html",
