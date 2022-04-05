@@ -71,11 +71,11 @@ div.message {
 	grid-template-columns: auto var(--height) 1vh;
 	grid-template-rows: 100%;
 	grid-template-areas: "text close .";
-	z-index: 200;
+	z-index: 2000;
 }
 div.message:not(:hover, :focus) {
 	height: var(--height);
-	z-index: 100;
+	z-index: 1000;
 }
 div.message.error {
 	background-color: rgba(50 0 0 / .96);
@@ -206,26 +206,25 @@ footer {
 	height: 10vh;
 }
 
-#controls-pane.open {
-
-	max-width: 300px;
+#controls-pane {
+	--width: 300px;
+	position: fixed;
+	top: 0;
+	left: calc(-1 * var(--width));
+	height: 100vh;
+	width: var(--width);
+	z-index: 200;
 	padding: 2rem 1rem;
 	background-color: #2E3047;
-	position: fixed;
-	top: 0;
-	height: 100vh;
-	z-index: 200;
+	border-right: 1px solid white;
+	transition-property: left, box-shadow;
+	transition-timing-function: ease-out;
+	transition-duration: .3s;
 }
 
-#controls-pane.closed {
-	position: fixed;
-	max-width: 300px;
-	padding: 2rem 1rem;
-	background-color: #115204;
-	top: 0;
-	left: -300px;
-	height: 100vh;
-	z-index: 200;
+#controls-pane.open {
+	left: 0;
+	box-shadow: .4vh 0 .5vh 0 rgb(0 0 0 / .1);
 }
 
 h3#controls-pane {
@@ -238,29 +237,65 @@ h3#controls-pane {
 	left: 0;
 }
 
-button#showHideSettings {
-	background-color: #2E2E2E;
-	color: #FFFFFF;
+#controls-pane > .toggle {
+	background-color: #2E3047;
+	border: solid 1px white;
+	border-left: 0;
 	position: relative;
 	display: inline;
 	top: -20px;
-	right: -290px;
-
+	left: 283px;
+	height: 40px;
+	width: 40px;
+	cursor: pointer;
+	box-shadow: .4vh 0 .5vh 0 rgb(0 0 0 / .1);
+}
+#controls-pane > .toggle > svg {
+	fill: white;
+	width: 100%;
+	height: 100%;
+	transition: transform .3s ease-out;
+}
+#controls-pane > .toggle:hover > svg {
+	transform: rotate(30deg);
+}
+#controls-pane.open > .toggle > svg {
+	transform: rotate(240deg);
+}
+#controls-pane.open > .toggle:hover > svg {
+	transform: rotate(210deg);
 }
 
-button#showHideSettings:hover {background-color: rgb(84 92 204);}
-
-#vertalignbutton {
-	background-image: url("images/vertical_align.svg");
-	background-repeat: no-repeat;
-	background-position: center;
+#vertical-align {
+	--size: 40px;
 	position: fixed;
 	z-index: 999;
 	top: 1vh;
 	right: 0.5vw;
-	width: 40px;
-	height: 40px;
-	background-color: #2E2E2E;
+	width: var(--size);
+	height: var(--size);
+	border: solid 1px white;
+	cursor: pointer;
+	background-color: #2E3047;
+	transition-property: opacity, right;
+	transition-timing-function: ease-out;
+	transition-duration: .3s;
 }
-
-#vertalignbutton:hover {background-color: rgb(84 92 204);}
+body.visualization-in-focus #vertical-align {
+	opacity: 0;
+	right: calc(-1 * var(--size));
+}
+#vertical-align > svg {
+	fill: white;
+	width: 100%;
+	height: 100%;
+}
+#vertical-align:hover > svg > :is(.top-arrow, .bottom-arrow) {
+	transition: transform .3s ease-out;
+}
+#vertical-align:hover > svg > .top-arrow {
+	transform: translateY(3%);
+}
+#vertical-align:hover > svg > .bottom-arrow {
+	transform: translateY(-3%);
+}

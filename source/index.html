@@ -22,8 +22,12 @@
 		<h1>Blockchain Visualizer</h1>
 		<main>
 
-			<aside id="controls-pane" class="closed">
-				<button type="button" id="showHideSettings">Settings</button>
+			<aside id="controls-pane">
+				<button type="button" class="toggle" title="Settings" aria-label="Settings">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+						<path d="m9.7 2-.5 2.5a8 8 0 0 0-2.3 1.3L4.5 5 2.2 9l2 1.7a8 8 0 0 0 0 2.6l-2 1.7 2.3 4 2.4-.8a8 8 0 0 0 2.3 1.3l.5 2.5h4.6l.5-2.5a8 8 0 0 0 2.3-1.3l2.4.8 2.3-4-2-1.7a8 8 0 0 0 0-2.6l2-1.7-2.3-4-2.4.8a8 8 0 0 0-2.3-1.3L14.3 2H9.7zM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/>
+					</svg>
+				</button>
 				<h3>Settings</h3>
 
 				<div id="controls">
@@ -43,8 +47,13 @@
 				</p>
 			</div>
 
-
-			<input id="vertalignbutton" type="button" onclick="location.href='#visualizer'">
+			<button type="button" id="vertical-align" title="Center visualization" aria-label="Center visualization">
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+					<path class="top-arrow" d="M16 5h-3V1h-2v4H8l4 4z"/>
+					<path class="center" d="M4 11v2h16v-2H4z"/>
+					<path class="bottom-arrow" d="M8 19h3v4h2v-4h3l-4-4z"/>
+				</svg>
+			</button>
 
 
 

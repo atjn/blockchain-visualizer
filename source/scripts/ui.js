@@ -931,17 +931,26 @@ generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElem
 
 
 
-const showAndHideButton = document.getElementById("showHideSettings");
+const showAndHideButton = document.querySelector("#controls-pane > .toggle");
 
 showAndHideButton.addEventListener("click", () => {
 	const controlsPane = document.getElementById("controls-pane");
 
-	if (controlsPane.classList.contains("closed")){
-		controlsPane.classList.remove("closed");
-		controlsPane.classList.add("open");
-	} else {
-		controlsPane.classList.remove("open");
-		controlsPane.classList.add("closed");
-	}
+	controlsPane.classList.toggle("open");
 
+});
+
+const visualizer = document.getElementById("visualizer");
+
+const verticalAlignButton = document.getElementById("vertical-align");
+verticalAlignButton.addEventListener("click", () => {
+	visualizer.scrollIntoView({behavior: "smooth"});
+});
+
+window.addEventListener("scroll", async () => {
+	if(Math.abs(visualizer.getBoundingClientRect().y) < 2){
+		document.body.classList.add("visualization-in-focus");
+	}else{
+		document.body.classList.remove("visualization-in-focus");
+	}
 });
