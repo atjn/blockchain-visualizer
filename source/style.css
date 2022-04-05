@@ -248,7 +248,7 @@ button#showHideSettings {
 
 }
 
-button#showHideSettings:hover {background-color: rgba(84, 92, 204);}
+button#showHideSettings:hover {background-color: rgb(84 92 204);}
 
 #vertalignbutton {
 	background-image: url("images/vertical_align.svg");
@@ -261,6 +261,6 @@ button#showHideSettings:hover {background-color: rgba(84, 92, 204);}
 	width: 40px;
 	height: 40px;
 	background-color: #2E2E2E;
-	}
+}
 
-#vertalignbutton:hover {background-color: rgba(84, 92, 204);}
+#vertalignbutton:hover {background-color: rgb(84 92 204);}
