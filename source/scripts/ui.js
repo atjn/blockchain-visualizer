@@ -23,6 +23,7 @@ import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simu
  *	}
  *
  */
+
 globalThis.settings = {};
 const allInputs = {
 	network: {
@@ -930,17 +931,26 @@ generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElem
 
 
 
-const showAndHideButton = document.getElementById("showHide");
-const controlsPane = document.getElementById("controls-pane");
-controlsPane.style.display = "none";
+const showAndHideButton = document.querySelector("#controls-pane > .toggle");
 
 showAndHideButton.addEventListener("click", () => {
 	const controlsPane = document.getElementById("controls-pane");
 
-	if (controlsPane.style.display !== "inline"){
-		controlsPane.style.display = "inline";
-	} else {
-		controlsPane.style.display = "none";
-	}
+	controlsPane.classList.toggle("open");
 
+});
+
+const visualizer = document.getElementById("visualizer");
+
+const verticalAlignButton = document.getElementById("vertical-align");
+verticalAlignButton.addEventListener("click", () => {
+	visualizer.scrollIntoView({behavior: "smooth"});
+});
+
+window.addEventListener("scroll", async () => {
+	if(Math.abs(visualizer.getBoundingClientRect().y) < 2){
+		document.body.classList.add("visualization-in-focus");
+	}else{
+		document.body.classList.remove("visualization-in-focus");
+	}
 });

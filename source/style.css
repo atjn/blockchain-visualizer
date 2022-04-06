@@ -25,7 +25,6 @@
 * {
 	box-sizing: border-box;
 	font-family: "Space Mono", monospace;
-
 }
 
 body {
@@ -72,11 +71,11 @@ div.message {
 	grid-template-columns: auto var(--height) 1vh;
 	grid-template-rows: 100%;
 	grid-template-areas: "text close .";
-	z-index: 200;
+	z-index: 2000;
 }
 div.message:not(:hover, :focus) {
 	height: var(--height);
-	z-index: 100;
+	z-index: 1000;
 }
 div.message.error {
 	background-color: rgba(50 0 0 / .96);
@@ -200,12 +199,10 @@ div.front {
 	transition-duration: .3s;
 }
 
-#controls {
+#controls, #playControls {
 	background-color: rgb(197 197 197 / 0.158);
 	border-top: 1px solid #FFFFFF;
 	border-bottom: 1px solid #FFFFFF;
-
-	height: 13vh;
 	padding: 1vh;
 }
 
@@ -221,41 +218,62 @@ footer {
 	height: 10vh;
 }
 
-div.fixedbutt {
-	background-color: rgb(53 53 53);
-	background-image: url("images/vertical_align.svg");
-	background-repeat: no-repeat;
-	background-position: center;
+#vertical-align {
+	--size: 40px;
 	position: fixed;
 	z-index: 999;
-	top: 3vh;
-	right: 3vw;
-	border: 1px solid white;
-
-	--padding: 5px;
-	padding: 3px;
-	padding-left: var(--padding);
-	padding-right: var(--padding);
+	top: 1vh;
+	right: 0.5vw;
+	width: var(--size);
+	height: var(--size);
+	border: solid 1px white;
+	cursor: pointer;
+	background-color: #2E3047;
+	transition-property: opacity, right;
+	transition-timing-function: ease-out;
+	transition-duration: .3s;
 }
-
-div.fixedbutt > a {color: #FFFFFF00; text-decoration: none;}
-div.fixedbutt > a:visited {color: var(--color);}
-div.fixedbutt:hover {filter: brightness(1.8);}
-
+body.visualization-in-focus #vertical-align {
+	opacity: 0;
+	right: calc(-1 * var(--size));
+}
+#vertical-align > svg {
+	fill: white;
+	width: 100%;
+	height: 100%;
+}
+#vertical-align:hover > svg > :is(.top-arrow, .bottom-arrow) {
+	transition: transform .3s ease-out;
+}
+#vertical-align:hover > svg > .top-arrow {
+	transform: translateY(3%);
+}
+#vertical-align:hover > svg > .bottom-arrow {
+	transform: translateY(-3%);
+}
 
 #controls-pane {
-	flex: 1 1 0;
-	max-width: 300px;
-	padding: 2rem 1rem;
-	background-color: #2E3047;
+	--width: 300px;
 	position: fixed;
 	top: 0;
-	left: 0;
+	left: calc(-1 * var(--width));
 	height: 100vh;
+	width: var(--width);
 	z-index: 200;
+	padding: 2rem 1rem;
+	background-color: #2E3047;
+	border-right: 1px solid white;
+	transition-property: left, box-shadow;
+	transition-timing-function: ease-out;
+	transition-duration: .3s;
 }
 
-#controls-pane h3 {
+#controls-pane.open {
+	left: 0;
+	box-shadow: .4vh 0 .5vh 0 rgb(0 0 0 / .1);
+}
+
+h3#controls-pane {
 	color: bisque;
 	font-size: 0.75rem;
 	text-transform: uppercase;
@@ -265,12 +283,31 @@ div.fixedbutt:hover {filter: brightness(1.8);}
 	left: 0;
 }
 
-button#showHide {
-	position: absolute;
-	border: 0;
-	padding-left: 10px;
-	padding-right: 10px;
-	z-index: 199;
-	margin-left: 40%;
-	margin-top: 0;
+#controls-pane > .toggle {
+	background-color: #2E3047;
+	border: solid 1px white;
+	border-left: 0;
+	position: relative;
+	display: inline;
+	top: -20px;
+	left: 283px;
+	height: 40px;
+	width: 40px;
+	cursor: pointer;
+	box-shadow: .4vh 0 .5vh 0 rgb(0 0 0 / .1);
+}
+#controls-pane > .toggle > svg {
+	fill: white;
+	width: 100%;
+	height: 100%;
+	transition: transform .3s ease-out;
+}
+#controls-pane > .toggle:hover > svg {
+	transform: rotate(30deg);
+}
+#controls-pane.open > .toggle > svg {
+	transform: rotate(240deg);
+}
+#controls-pane.open > .toggle:hover > svg {
+	transform: rotate(210deg);
 }
