@@ -261,16 +261,6 @@ body.visualization-in-focus #vertical-align {
 	box-shadow: .4vh 0 .5vh 0 rgb(0 0 0 / .1);
 }
 
-h3#controls-pane {
-	color: bisque;
-	font-size: 0.75rem;
-	text-transform: uppercase;
-	margin-bottom: 0.5rem;
-	position: center;
-	top: 0;
-	left: 0;
-}
-
 #controls-pane > .toggle {
 	background-color: #2E3047;
 	border: solid 1px white;
