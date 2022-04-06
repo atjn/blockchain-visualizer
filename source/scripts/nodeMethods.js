@@ -96,8 +96,8 @@ export class Block{
 			this.ranges,
 			{
 				id: this.id,
-				trust: this.trust
-			}
+				trust: this.trust,
+			},
 		);
 	}
 	#id;
@@ -416,15 +416,21 @@ export class BlockChain{
 	 */
 	tidy(){
 		let effect;
+		let reruns = 0;
 		do{
+			reruns++;
 			effect = false;
+
+			if(reruns > 50){
+				throw new Error("Infinite loop detected when tidying a blockchain");
+			}
 
 			/**
 			 * Remove chains that contain no blocks.
 			 */
 			for(const { indexes, chain: branch } of this.branchEntries()){
 				if(indexes.length > 0 && branch.blocks.length === 0 && branch.branches.length === 0){
-					console.log("remove chains with no blocks")
+					//console.log("remove chains with no blocks")
 
 					this.removeBranch(indexes);
 
@@ -438,7 +444,7 @@ export class BlockChain{
 			 */
 			for(const { chain: branch } of this.branchEntries()){
 				if(branch.branches.length === 1){
-					console.log("streamline branches")
+					//console.log("streamline branches")
 					branch.blocks.push(...branch.branches[0].blocks);
 					branch.branches = branch.branches[0].branches;
 
@@ -450,13 +456,13 @@ export class BlockChain{
 			 * Connect blocks that point to each other, but haven't been connected.
 			 * This creates new branches that duplicate already existing information, but it is important
 			 * to be aware of every possible branch.
-			 *//*
+			 */
 			for(const { chain, localIndex, block } of this.entries()){
 				const branches = Boolean(localIndex === chain.blocks.length - 1);
 
 				/**
 				 * Save the ID's of all branches that already exist.
-				 *//*
+				 */
 				const currentBranches = new Set();
 				if(branches){
 					for(const branch of chain.branches){
@@ -471,7 +477,7 @@ export class BlockChain{
 
 				/**
 				 * If a new branch is found that doesn't already exist, then add that branch.
-				 *//*
+				 */
 				for(const possibleBranch of this.findAll({previousId: block.id})){
 					const id = `${possibleBranch.block.id}${possibleBranch.block.previousId}`;
 					if(!currentBranches.has(id)){
@@ -496,7 +502,7 @@ export class BlockChain{
 					}
 				}
 
-			}*/
+			}
 
 			/**
 			 * If there are any branches without a complete base path,
@@ -518,7 +524,7 @@ export class BlockChain{
 				}
 
 				if(index > -1){
-					console.log("remove unbased branches");
+					//console.log("remove unbased branches");
 					branch.blocks.splice(0, index+1);
 					effect = true;
 				}
@@ -528,56 +534,57 @@ export class BlockChain{
 			 * Find identical branches connected to the same root and deduplicate them.
 			 */
 			if(combineBranches(this)) effect = true;
-			/**
-			 * @param chain
-			 */
-			function combineBranches(chain){
-				let effect = false;
-				let didCombineBranches;
-				do{
-					didCombineBranches = false;
-					combineBranchesLoop: for(const [ index, branch ] of chain.branches.entries()){
-						for(const [ otherIndex, otherBranch ] of chain.branches.entries()){
-							if(index >= otherIndex) continue;
-							let blockIndex = 0;
-							while(
-								branch.blocks.length > blockIndex &&
-								otherBranch.blocks.length > 0 &&
-								branch.blocks[blockIndex]?.id === otherBranch.blocks[0]?.id
-							){
-								blockIndex++;
-							}
-							if(blockIndex > 0){
-								console.log("Combine branches")
-
-								otherBranch.blocks.shift(0, blockIndex);
-
-								const newBranch = new BlockChain(
-									branch.blocks.shift(0, blockIndex),
-									[ branch, otherBranch ],
-								)
-
-								chain.branches.push(newBranch);
-
-								branch.blocks = [];
-								branch.branches = [];
-								otherBranch.blocks = [];
-								otherBranch.branches = [];
-
-								didCombineBranches = true;
-								break combineBranchesLoop;
-							}
-						}
-					}
-					if(didCombineBranches) effect = true;
-				}while(didCombineBranches);
-
-				for(const branch of chain.branches) if(combineBranches(branch)) effect = true;
-
-				return effect;
-			}
 
 		}while(effect);
+
+		/**
+		 * @param chain
+		 */
+		function combineBranches(chain){
+			let effect = false;
+			let didCombineBranches;
+			do{
+				didCombineBranches = false;
+				combineBranchesLoop: for(const [ index, branch ] of chain.branches.entries()){
+					for(const [ otherIndex, otherBranch ] of chain.branches.entries()){
+						if(index >= otherIndex) continue;
+						let blockIndex = 0;
+						while(
+							branch.blocks.length > blockIndex &&
+						otherBranch.blocks.length > 0 &&
+						branch.blocks[blockIndex]?.id === otherBranch.blocks[0]?.id
+						){
+							blockIndex++;
+						}
+						if(blockIndex > 0){
+						//console.log("Combine branches")
+
+							otherBranch.blocks.shift(0, blockIndex);
+
+							const newBranch = new BlockChain(
+								branch.blocks.shift(0, blockIndex),
+								[ branch, otherBranch ],
+							);
+
+							chain.branches.push(newBranch);
+
+							branch.blocks = [];
+							branch.branches = [];
+							otherBranch.blocks = [];
+							otherBranch.branches = [];
+
+							didCombineBranches = true;
+							break combineBranchesLoop;
+						}
+					}
+				}
+				if(didCombineBranches) effect = true;
+			}while(didCombineBranches);
+
+			for(const branch of chain.branches) if(combineBranches(branch)) effect = true;
+
+			return effect;
+		}
 
 	}
 

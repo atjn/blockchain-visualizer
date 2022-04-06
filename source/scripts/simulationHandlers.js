@@ -424,7 +424,6 @@ export class EventDrawer{
 		for(const blockEvent of event.events){
 			switch(blockEvent.action){
 				case "remove": {
-					console.log(blockEvent);
 					const block = this.#blocks.get(blockEvent.localId);
 					if(block){
 						block?.remove();

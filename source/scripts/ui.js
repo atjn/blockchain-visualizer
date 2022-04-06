@@ -36,6 +36,7 @@ const allInputs = {
 				options: [
 					"Bitcoin",
 					"PrebenCoin",
+					"Test",
 				],
 				default: "Bitcoin",
 				description: "Which blockchain protocol should be used in the simulation.",
