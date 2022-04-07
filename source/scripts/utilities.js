@@ -16,3 +16,14 @@
 export function clampMin(minimum, maximum, ...numbers){
 	return Math.max(Math.min(...numbers, maximum), minimum);
 }
+
+/**
+ * Takes a list of numbers and calculates the average of them.
+ *
+ * @param  {...number} numbers - The list of numbers to find the average of.
+ *
+ * @returns {number} - The avreage of the list of numbers.
+ */
+export function average(...numbers){
+	return numbers.reduce((accumulated, next) => accumulated + next, 0) / numbers.length;
+}

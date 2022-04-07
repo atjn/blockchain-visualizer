@@ -12,7 +12,7 @@
  * When the class is constructed, it automatically starts a Worker thread and passes the appropriate settings to it.
  */
 
-import { resetSimulation } from "./ui.js";
+import { resetSimulation, logMessage, highlightLogs } from "./ui.js";
 export class Simulation extends Worker{
 
 	/**
@@ -30,25 +30,33 @@ export class Simulation extends Worker{
 		 *
 		 * @param {object} event - The draw event.
 		 */
-		this.onmessage = event => {
+		this.addEventListener("message", event => {
 
-			// Save the draw event to the global event array.
-			globalThis.events.push(event.data);
 
-			// Pause the simulation if the returned draw event is too far in the future.
-			if(event.data.timestamp > globalThis.simulationTime.now + this.#bufferTime.max) this.pause();
+			if(event.data.type === "log"){
+
+				logMessage(event.data);
+
+			}else{
+
+				// Save the draw event to the global event array.
+				globalThis.events.push(event.data);
+
+				// Pause the simulation if the returned draw event is too far in the future.
+				if(event.data.timestamp > globalThis.simulationTime.now + this.#bufferTime.max) this.pause();
+			}
 
 			// Make sure the `eventDispatcher` is running to handle this new event.
 			globalThis.eventDispatcher.poke();
 
-		};
-		this.onerror = event => {
+		});
+		this.addEventListener("error", event => {
 			globalThis.messages.new({
 				type: "error",
-				text: "Sorry, there was an unexpected error in the simulation. This probably means the simulation won't work as intended.",
+				text: "Sorry, there was an error in the simulation. This probably means the simulation won't work as intended. You can see more details by anbling info for nerds in the settings pange.",
 			});
 			throw event;
-		};
+		});
 
 		// Send the command to start the simulation, and pass the `globalThis.settings` element.
 		this.postMessage({ message: "start", settings: globalThis.settings });
@@ -269,6 +277,9 @@ export class EventDispatcher{
 
 			// Tell the `eventDrawer` to draw the event in the UI.
 			globalThis.eventDrawer.draw(event);
+
+			// Also make sure the correct logs are highlighted
+			highlightLogs();
 
 			// Prepare the next event
 			this.#nextEvent++;

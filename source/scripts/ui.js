@@ -885,8 +885,13 @@ export function resetSimulation(full = true){
 	document.querySelector("#visualizer .blockchain").innerHTML = "";
 
 	if(full){
+
 		// Open a new underlying simulation
 		globalThis.simulation = new Simulation();
+
+		// Remove all logs from the simulation
+		document.getElementById("nerd-log").innerHTML = "";
+
 	}
 
 	showNerdInfo();
@@ -899,9 +904,9 @@ async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, las
 	const nerdInfo = document.getElementById("nerd-info");
 
 	if(globalThis.settings.simulation?.nerdInfo){
-		nerdInfo.classList.add("active");
+		document.body.classList.add("nerd-info");
 	}else{
-		nerdInfo.classList.remove("active");
+		document.body.classList.remove("nerd-info");
 		return;
 	}
 
@@ -980,6 +985,52 @@ async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, las
 		}, 500, state);
 	}
 
+}
+
+export async function logMessage(data){
+	if(globalThis.settings.simulation?.nerdInfo === false) return;
+	const nerdLog = document.getElementById("nerd-log");
+	const log = document.createElement("output");
+	log.value = data.message;
+	log.dataset.severity = data.severity;
+	log.dataset.timestamp = data.timestamp;
+	nerdLog.insertBefore(log, nerdLog.firstChild);
+	/*
+	while(nerdLog.childElementCount > 10){
+		let i = childElementCount - 1;
+		let element;
+		do{
+			element = nerdLog.children[i];
+			i++;
+		}while(["warning", "error"].contains(element.dataset.severity));
+		element.remove();
+	}*/
+
+	if(data.severity === "error"){
+		globalThis.messages.new({
+			type: "error",
+			text: "Sorry, there was an error in the simulation. This probably means the simulation won't work as intended.",
+		});
+	}
+}
+
+export async function highlightLogs(){
+	if(globalThis.settings.simulation?.nerdInfo === false) return;
+	const nerdLog = document.getElementById("nerd-log");
+
+	const timestamp = Math.round(globalThis.simulationTime.now / 1000);
+	let first = true;
+	for(const log of nerdLog.children){
+		if(Number(log.dataset.timestamp) === timestamp){
+			log.classList.add("highlight");
+			if(first){
+				log.scrollIntoView();
+				first = false;
+			}
+		}else{
+			log.classList.remove("highlight");
+		}
+	}
 }
 
 /**

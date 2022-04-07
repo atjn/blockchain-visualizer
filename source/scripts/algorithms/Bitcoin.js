@@ -141,21 +141,20 @@ function updateBlockTrustLevels(nodeData){
 
 	for(const block of nodeData.blockchain) block.trust = 0;
 
-	let trust = 0;
-	const trustIncrease = .1;
 	for(const end of nodeData.blockchain.getEnds()){
-		let block = end;
-		while(block.previousId !== undefined){
-			trust = Math.min(1, trust + trustIncrease);
-			const { chain, localIndex } = nodeData.blockchain.find(block.previousId);
+		setRecursiveBlockTrust(nodeData.blockchain, end.previousId);
+	}
 
-			if(chain){
-				chain.blocks[localIndex].trust = Math.max(chain.blocks[localIndex].trust, trust);
-				block = chain.blocks[localIndex];
-			}else{
-				break;
-			}
+	function setRecursiveBlockTrust(baseChain, blockId, trust = 0){
+		if(blockId === undefined) return;
+		const trustIncrease = .1;
+		trust = Math.min(1, trust + trustIncrease);
+		for(const { chain, localIndex, block } of baseChain.findAll({id: blockId})){
+			if(!chain || !block) continue;
 
+			chain.blocks[localIndex].trust = Math.max(block.trust, trust);
+			setRecursiveBlockTrust(baseChain, block.previousId, trust);
 		}
 	}
+
 }

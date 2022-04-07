@@ -18,8 +18,8 @@
  * whereas the UI events are strictly designed to tell the UI what to draw on the screen, and when.
  */
 
-import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal, BlockChain } from "./nodeMethods.js";
-import { clampMin } from "./utilities.js";
+import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal, BlockChain, sendErrorEvent, sendLogEvent } from "./nodeMethods.js";
+import { average, clampMin } from "./utilities.js";
 
 
 /**
@@ -31,6 +31,7 @@ onmessage = async function (event){
 	switch (event.data.message) {
 		// Start the simulation by sending the `globalThis.settings` object from the UI controls.
 		case "start": {
+			sendLogEvent("Starting simulation");
 			globalThis.settings = event.data.settings;
 			const { process } = await import(`./algorithms/${globalThis.settings.network.algorithms}.js`);
 			globalThis.nodeProcess = process;
@@ -41,11 +42,13 @@ onmessage = async function (event){
 		}
 		// If the simulation is way ahead of the realtime playback, a `pause` command can be send to temporarily pause the simulation.
 		case "pause": {
+			sendLogEvent("Pausing simulation");
 			globalThis.settings.run = false;
 			break;
 		}
 		// Then when the realtime playback is running out of events, a `resume` commands can be send to start receiving new events again.
 		case "resume": {
+			sendLogEvent("Resuming simulation");
 			globalThis.settings.run = true;
 			globalThis.eventQueue.dequeue();
 			break;
@@ -124,35 +127,56 @@ class EventQueue{
 			// Run the event
 			if(event instanceof FunctionEvent){
 
-				event.run?.call(event.with || {});
+				try{
+					event.run?.call(event.with || {});
+				}catch(error){
+					sendErrorEvent("An internal function encountered an error", {error});
+					throw error;
+				}
 
 			}else if (event instanceof NodeEvent){
 
 				// Get the node's data, hand it over to a node process, and then save the modified node data after the data packet has been processed
-				const { nodeData, sendPackets } = await globalThis.nodeProcess(
-					event.packet,
-					globalThis.nodes.get(event.packet.to),
-				);
 
-				const colors = nodeData.blockchain.getEnds().map(block => {
-					const { chain } = nodeData.blockchain.find(block);
-					let trust = 0;
-					for(const block of chain.blocks) trust += block.trust;
-					trust /= chain.blocks.length;
-					return {color: block.id, trust};
-				});
-				sendDrawEvent({
-					type: "nodeColor",
-					address: nodeData.address,
-					colors,
-				});
+				sendLogEvent(`Let node ${event.packet.to} process ${event.packet.summary} from ${event.packet.from === event.packet.to ? "a higher power" : `node ${event.packet.from}`}`);
 
-				globalThis.nodes.update(nodeData);
+				let nodeData, sendPackets;
+				try{
+					const result = await globalThis.nodeProcess(
+						event.packet,
+						globalThis.nodes.get(event.packet.to),
+					);
+					nodeData = result.nodeData;
+					sendPackets = result.sendPackets;
+				}catch(error){
+					sendErrorEvent(`The node algorithm encountered an error`, {error});
+					throw error;
+				}
 
-				this.#sendBlockchainEvents();
+				try{
+					const colors = nodeData.blockchain.getEnds().map(block => {
+						const { chain } = nodeData.blockchain.find(block);
+						let trust = 0;
+						for(const block of chain.blocks) trust += block.trust;
+						trust /= chain.blocks.length;
+						return {color: block.id, trust};
+					});
+					sendDrawEvent({
+						type: "nodeColor",
+						address: nodeData.address,
+						colors,
+					});
 
-				for(const packet of sendPackets){
-					this.enqueue(new NodeEvent(packet, globalThis.timestamp));
+					globalThis.nodes.update(nodeData);
+
+					this.#handleBlockchainEvents();
+
+					for(const packet of sendPackets){
+						this.enqueue(new NodeEvent(packet, globalThis.timestamp));
+					}
+				}catch(error){
+					sendErrorEvent("An error was encountered while handling the result of the node process", {error});
+					throw error;
 				}
 
 			}
@@ -164,15 +188,40 @@ class EventQueue{
 	}
 
 	#lastAllBlocks = new Map();
-	#sendBlockchainEvents(){
+	#handleBlockchainEvents(){
 		const events = [];
 
 		const globalChain = new BlockChain({});
+		const globalChainTrust = new Map();
 		for(const nodeData of globalThis.nodes.values()){
 			for(const block of nodeData.blockchain){
+				const id = `${block.id}${block.previousId}`;
+				if(!globalChainTrust.has(id)) globalChainTrust.set(id, {block, trusts: []});
+				globalChainTrust.get(id).trusts.push(block.trust);
 				globalChain.add(block);
 			}
 		}
+
+		for(const { block, trusts } of globalChainTrust.values()){
+			const trust = average(...trusts);
+			for(const { chain, localIndex } of globalChain.findAll(block)){
+				chain.blocks[localIndex].trust = trust;
+			}
+		}
+
+		let trustedIndex = 0;
+		while(trustedIndex < globalChain.blocks.length && globalChain.blocks[trustedIndex].trust === 1){
+			trustedIndex++;
+		}
+
+		if(trustedIndex > 0){
+			const blocksToTrim = globalChain.blocks.slice(0, trustedIndex+1)
+			sendLogEvent(`Trim fully trusted block${blocksToTrim.slice(0, -1).length > 1 ? "s" : ""} ${new Intl.ListFormat('en-US', { style: 'long', type: 'conjunction' }).format(blocksToTrim.slice(0, -1).map(block => block.id))}`);
+			for(const nodeData of globalThis.nodes.values()){
+				nodeData.blockchain.trimBase(blocksToTrim);
+			}
+		}
+
 
 		const allBlocks = new Map();
 		const blockSizes = [];

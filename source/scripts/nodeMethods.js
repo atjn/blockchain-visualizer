@@ -27,6 +27,9 @@ export class Packet{
 		this.delay = this.distance * globalThis.settings.network.delay;
 
 	}
+	get summary(){
+		return `a non-standard packet`;
+	}
 }
 
 /**
@@ -43,6 +46,9 @@ export class AddressPacket extends Packet{
 	constructor(to, from, addresses){
 		super(to, from);
 		this.addresses = addresses;
+	}
+	get summary(){
+		return `adress${this.addresses.length > 1 ? "es": ""} for node${this.addresses.length > 1 ? "s": ""} ${new Intl.ListFormat('en-US', { style: 'long', type: 'conjunction' }).format(this.addresses.map(address => String(address)))}`;
 	}
 }
 
@@ -61,6 +67,9 @@ export class BlockPacket extends Packet{
 		super(to, from);
 		this.block = block;
 	}
+	get summary(){
+		return `block ${this.block.id}`;
+	}
 }
 
 /**
@@ -76,6 +85,9 @@ export class NewBlockSignal extends Packet{
 	 */
 	constructor(to){
 		super(to, to);
+	}
+	get summary(){
+		return `a new block`;
 	}
 }
 
@@ -107,6 +119,9 @@ export class Block{
 	#previousId;
 	get previousId(){
 		return this.#previousId;
+	}
+	setAsBase(){
+		this.#previousId = undefined;
 	}
 	#size = 10000;
 	get size(){
@@ -257,6 +272,38 @@ export function sendDrawEvent(data){
 		},
 		...data,
 	});
+}
+
+export function sendLogEvent(message, data){
+	return postMessage({
+		...{
+			type: "log",
+			timestamp: Math.round(globalThis.timestamp / 1000),
+			severity: "info",
+			message,
+		},
+		...data,
+	});
+}
+
+export function sendWarningEvent(message, data){
+	return sendLogEvent(
+		message,
+		{
+			severity: "warning",
+			...data,
+		}
+	);
+}
+
+export function sendErrorEvent(message, data){
+	return sendLogEvent(
+		message,
+		{
+			severity: "error",
+			...data,
+		}
+	);
 }
 
 /**
@@ -562,7 +609,7 @@ export class BlockChain{
 							blockIndex++;
 						}
 						if(blockIndex > 0){
-						//console.log("Combine branches")
+							//console.log("Combine branches")
 
 							otherBranch.blocks.shift(0, blockIndex);
 
@@ -593,6 +640,24 @@ export class BlockChain{
 
 	}
 
+	trimBase(blocks){
+
+		for(const block of blocks.slice(0, -1)){
+			for(const { chain, localIndex } of this.findAll(block)){
+				if(!chain) continue;
+				chain.blocks.splice(localIndex, 1);
+			}
+		}
+
+		for(const { chain, localIndex } of this.findAll(blocks.at(-1))){
+			if(!chain) continue;
+			chain.blocks[localIndex].setAsBase();
+		}
+
+		this.tidy();
+
+	}
+
 	getStarts(){
 
 		const starts = [];
@@ -620,7 +685,7 @@ export class BlockChain{
 
 			startBranches.push(this);
 
-		}else if(this.branches.length > 0){
+		}else{
 
 			for(const branch of this.branches){
 				startBranches.push(...branch.getStartBranches());
