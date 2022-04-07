@@ -454,23 +454,25 @@ export class BlockChain{
 
 			/**
 			 * Connect blocks that point to each other, but haven't been connected.
-			 * This creates new branches that duplicate already existing information, but it is important
-			 * to be aware of every possible branch.
+			 * This creates new branches that duplicate already existing information,
+			 * but it is important to be aware of every possible branch, so that's what we want.
 			 */
 			for(const { chain, localIndex, block } of this.entries()){
-				const branches = Boolean(localIndex === chain.blocks.length - 1);
+				const nextBlockBranches = Boolean(localIndex === chain.blocks.length - 1);
+
 
 				/**
 				 * Save the ID's of all branches that already exist.
 				 */
 				const currentBranches = new Set();
-				if(branches){
+				if(nextBlockBranches){
 					for(const branch of chain.branches){
-						if(branch.blocks.length === 0) continue;
-						const currentBranch = branch.blocks[0];
-						currentBranches.add(`${currentBranch.id}${currentBranch.previousId}`);
+						for(const currentBranch of branch.getStarts()){
+							currentBranches.add(`${currentBranch.id}${currentBranch.previousId}`);
+						}
 					}
 				}else{
+					//console.log(chain, localIndex, block);
 					const currentBranch = chain.blocks[localIndex + 1];
 					currentBranches.add(`${currentBranch.id}${currentBranch.previousId}`);
 				}
@@ -486,7 +488,7 @@ export class BlockChain{
 							blocks: possibleBranch.chain.blocks.slice(possibleBranch.localIndex),
 							branches: possibleBranch.chain.branches,
 						});
-						if(branches){
+						if(nextBlockBranches){
 							chain.branches.push(newChain);
 						}else{
 							chain.branches = [
@@ -496,7 +498,7 @@ export class BlockChain{
 								}),
 								newChain,
 							];
-							chain.blocks = chain.block.slice(0, localIndex);
+							chain.blocks = chain.blocks.slice(0, localIndex);
 						}
 						effect = true;
 					}
@@ -508,36 +510,39 @@ export class BlockChain{
 			 * If there are any branches without a complete base path,
 			 * which contain blocks that are also present elsewhere,
 			 * then remove those blocks from these branches.
-			 *//*
-			for(const branch of this.branches){
-				if(branch.blocks.length === 0 || branch.blocks[0].previousId === undefined) continue;
+			 */
+			if(this.blocks.length === 0){
+				for(const branch of this.getStartBranches()){
+					if(branch.blocks[0].previousId === undefined){
+						continue;
+					}
 
-				let index = -1;
-				let foundElsewhere = true;
-				while(index + 1 < branch.blocks.length && foundElsewhere){
-					const block = branch.blocks[index + 1];
-					if([ ...this.findAll(block) ].length > 1){
-						index++;
-					}else{
-						foundElsewhere = false;
+					let index = -1;
+					let foundElsewhere = true;
+					while(index + 1 < branch.blocks.length && foundElsewhere){
+						const block = branch.blocks[index + 1];
+						if(this.has(block, 2)){
+							index++;
+						}else{
+							foundElsewhere = false;
+						}
+					}
+
+					if(index > -1){
+						//console.log("remove unbased branches");
+						branch.blocks.splice(0, index + 1);
+						effect = true;
 					}
 				}
+			}
 
-				if(index > -1){
-					//console.log("remove unbased branches");
-					branch.blocks.splice(0, index+1);
-					effect = true;
-				}
-			}*/
-
-			/**
-			 * Find identical branches connected to the same root and deduplicate them.
-			 */
 			if(combineBranches(this)) effect = true;
 
 		}while(effect);
 
 		/**
+		 * Find identical branches connected to the same root and deduplicate them.
+		 *
 		 * @param chain
 		 */
 		function combineBranches(chain){
@@ -586,6 +591,44 @@ export class BlockChain{
 			return effect;
 		}
 
+	}
+
+	getStarts(){
+
+		const starts = [];
+
+		if(this.blocks.length > 0){
+
+			starts.push(this.blocks[0]);
+
+		}else if(this.branches.length > 0){
+
+			for(const branch of this.branches){
+				starts.push(...branch.getStarts());
+			}
+
+		}
+
+		return starts;
+	}
+
+	getStartBranches(){
+
+		const startBranches = [];
+
+		if(this.blocks.length > 0){
+
+			startBranches.push(this);
+
+		}else if(this.branches.length > 0){
+
+			for(const branch of this.branches){
+				startBranches.push(...branch.getStartBranches());
+			}
+
+		}
+
+		return startBranches;
 	}
 
 	getEnds(){
@@ -655,11 +698,12 @@ export class BlockChain{
 	 * @param {string} param0.id - The id of the block to find.
 	 * @param {string} param0.previousId - The previous id pointer of the block to find.
 	 * @param block
+	 * @param amount
 	 * @returns {boolean} - A list of entries of blocks that fit the description.
 	 */
-	has(block){
+	has(block, amount = 1){
 
-		if([...this.findAll(block)].length > 0) return true;
+		if([...this.findAll(block)].length >= amount) return true;
 
 		return false;
 	}
@@ -667,23 +711,23 @@ export class BlockChain{
 	*entries(){
 
 		let globalIndex = 0;
-		for(const [ index, block ] of this.blocks.entries()){
+		for(const [ localIndex, block ] of this.blocks.entries()){
 			yield {
 				chainIndexes: [],
 				chain: this,
 				globalIndex,
-				localIndex: index,
+				localIndex,
 				block,
 			};
 			globalIndex++;
 		}
 
-		for(const branchEntry of this.branchEntries()){
-			if(branchEntry.indexes.length === 0) continue;
-
-			for(const blockEntry of branchEntry.chain.entries()){
+		for(const [ branchIndex, branch ] of this.branches.entries()){
+			for(const blockEntry of branch.entries()){
+				blockEntry.chainIndexes.unshift(branchIndex);
 				blockEntry.globalIndex += globalIndex;
-				yield { ...branchEntry, ...blockEntry };
+				if(!blockEntry.block) console.warn("fuck the what");
+				yield blockEntry;
 			}
 		}
 

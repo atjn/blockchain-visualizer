@@ -94,6 +94,9 @@ export class Simulation extends Worker{
 	}
 
 	#paused = false;
+	get paused(){
+		return this.#paused;
+	}
 }
 
 /**

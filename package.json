@@ -14,7 +14,7 @@
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
     "lint:nofix": "npm run lint:js:nofix && npm run lint:css:nofix && npm run lint:html:nofix",
     "test:unit": "tap",
-    "test": "npm install && npm run lint:nofix && npm run test:unit &&npm run build",
+    "test": "npm install && npm run lint:nofix && npm run test:unit && npm run build",
     "build": "node build.js"
   },
   "repository": {

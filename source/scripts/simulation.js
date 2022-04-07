@@ -19,6 +19,7 @@
  */
 
 import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal, BlockChain } from "./nodeMethods.js";
+import { clampMin } from "./utilities.js";
 
 
 /**
@@ -60,7 +61,7 @@ class EventQueue{
 	#isSorted = true;
 	#dequeueing = false;
 	#dequeueStartTime = 0;
-	#maxDequeueTime = 3000;
+	#maxDequeueTime = 1500;
 
 	/**
 	 * Sorts the events by timestamp, meaning the next event is always first in line.
@@ -174,7 +175,7 @@ class EventQueue{
 		}
 
 		const allBlocks = new Map();
-		const blockSizes = [20];
+		const blockSizes = [];
 		defineBlockPosition(globalChain, allBlocks, blockSizes);
 
 		/**
@@ -212,7 +213,7 @@ class EventQueue{
 			}
 		}
 
-		const blockSize = Math.min(...blockSizes);
+		const blockSize = clampMin(2, 20, ...blockSizes);
 		for(const [ key, block ] of allBlocks.entries()){
 			block.left *= blockSize;
 			block.left += blockSize;

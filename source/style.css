@@ -108,6 +108,43 @@ div.front {
 	padding-right: 25vw;
 }
 
+#nerd-info {
+	position: fixed;
+	display: none;
+	bottom: 1vw;
+	left: 1vw;
+	z-index: 1000;
+	padding: 1vw;
+	background-color: rgb(0 0 0 / 0.8);
+	border: .5vw solid green;
+}
+#nerd-info.active {
+	display: initial;
+}
+#nerd-info:has(output[data-status="acceptable"]) {
+	border-color: yellow;
+}
+#nerd-info:has(output[data-status="bad"]) {
+	border-color: red;
+}
+
+#nerd-info > * {
+	display: inline-block;
+	margin: 2px;
+}
+#nerd-info > p {
+	width: 270px;
+}
+#nerd-info > output[data-status="good"] {
+	color: green;
+}
+#nerd-info > output[data-status="acceptable"] {
+	color: yellow;
+}
+#nerd-info > output[data-status="bad"] {
+	color: red;
+}
+
 #visualizer {
 	position: relative;
 	margin-top: 1vh;
@@ -132,6 +169,7 @@ div.front {
 #visualizer .network {
 	height: 70%;
 	background-color: rgb(129 129 129 / 0.185);
+	overflow: hidden;
 }
 
 #visualizer .network * {
@@ -185,6 +223,8 @@ div.front {
 	top: 72%;
 	height: 25vh;
 	background-color: rgb(119 119 119);
+	overflow-x: scroll;
+	overflow-y: hidden;
 }
 
 #visualizer .blockchain .block {

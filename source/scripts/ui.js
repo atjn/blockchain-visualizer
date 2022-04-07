@@ -26,6 +26,18 @@ import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simu
 
 globalThis.settings = {};
 const allInputs = {
+	simulation: {
+		type: "box",
+		description: "Settings related to the general simulation setup",
+		children: {
+			nerdInfo: {
+				type: "checkbox",
+				label: "Show info for nerds",
+				default: false,
+				description: "Show debug information regarding the simulation process",
+			},
+		},
+	},
 	network: {
 		type: "box",
 		description: "Settings related to the simulated network",
@@ -204,6 +216,22 @@ function generateInputs(inputData, savedState, parent){
 				break;
 			}
 
+			case "checkbox": {
+				const checkbox = document.createElement("input");
+				checkbox.type = data.type;
+				checkbox.name = name;
+				checkbox.id = name;
+
+				parent.appendChild(checkbox);
+				appendDataReader(checkbox);
+				checkbox.checked = savedState?.[name] ?? data.setTo ?? data.default;
+
+				// This makes the input handler run on this control, which saves the inital default value to `globalThis.settings`.
+				checkbox.dispatchEvent(new InputEvent("input"));
+
+				break;
+			}
+
 			case "number": {
 				const number = document.createElement("input");
 				number.type = data.type;
@@ -303,7 +331,9 @@ function generateInputs(inputData, savedState, parent){
 			 */
 
 			// Update to the new value in `globalThis.settings`.
-			if(["range", "number"].includes(element.type)){
+			if(element.type === "checkbox"){
+				settingsScope[element.name] = element.checked;
+			}else if(["range", "number"].includes(element.type)){
 				settingsScope[element.name] = Number(element.value);
 			}else{
 				settingsScope[element.name] = element.value;
@@ -470,6 +500,7 @@ class URLState{
 		skip: "-",
 		number: ".",
 		string: "~",
+		boolean: "!",
 	};
 	#settingStringHashLength = 3;
 
@@ -575,6 +606,13 @@ class URLState{
 						}
 						break;
 					}
+					case "boolean": {
+						value = Boolean(encodedValue === "t");
+						break;
+					}
+					default: {
+						throw new TypeError(`Unknown settings type "${type}" when restoring URL state`);
+					}
 				}
 
 				restoredSettings[settingKey] = value;
@@ -652,6 +690,10 @@ class URLState{
 						}
 						case "string": {
 							s = await hash(s, this.#settingStringHashLength);
+							break;
+						}
+						case "boolean": {
+							s = s ? "t" : "";
 							break;
 						}
 						default: {
@@ -846,6 +888,98 @@ export function resetSimulation(full = true){
 		// Open a new underlying simulation
 		globalThis.simulation = new Simulation();
 	}
+
+	showNerdInfo();
+}
+
+/**
+ * @param state
+ */
+async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, lastOrderUpdate: 0, lastOrder: true}){
+	const nerdInfo = document.getElementById("nerd-info");
+
+	if(globalThis.settings.simulation?.nerdInfo){
+		nerdInfo.classList.add("active");
+	}else{
+		nerdInfo.classList.remove("active");
+		return;
+	}
+
+	if(globalThis.events.length !== state.lastEventLength){
+		state.lastEventUpdate = Date.now();
+		state.lastEventLength = globalThis.events.length;
+	}
+	if(globalThis.simulation.paused !== state.lastOrder){
+		state.lastOrderUpdate = Date.now();
+		state.lastOrder = globalThis.simulation.paused;
+	}
+
+	const [
+		threads,
+		orderedSimulationStatus,
+		actualSimulationStatus,
+		timelineBuffer,
+		bufferedEvents,
+	] = nerdInfo.querySelectorAll("output");
+
+	const concurrency = window.navigator.hardwareConcurrency;
+	threads.value = concurrency;
+	if(concurrency >= 4){
+		threads.dataset.status = "good";
+	}else if(concurrency >= 3){
+		threads.dataset.status = "acceptable";
+	}else{
+		threads.dataset.status = "bad";
+	}
+
+	if(globalThis.simulation.paused){
+		orderedSimulationStatus.value = "Pause";
+		orderedSimulationStatus.dataset.status = "good";
+	}else{
+		orderedSimulationStatus.value = "Run";
+		orderedSimulationStatus.dataset.status = "acceptable";
+	}
+
+	const timeSinceLastEventUpdate = Date.now() - state.lastEventUpdate;
+	const timeSinceLastOrderUpdate = Date.now() - state.lastOrderUpdate;
+	if(timeSinceLastEventUpdate > 1500){
+		actualSimulationStatus.value = "Not running";
+		if(globalThis.simulation.paused){
+			actualSimulationStatus.dataset.status = "good";
+		}else{
+			actualSimulationStatus.dataset.status = timeSinceLastOrderUpdate < 2000 ? "acceptable" : "bad";
+		}
+	}else{
+		actualSimulationStatus.value = "Running";
+		if(globalThis.simulation.paused){
+			actualSimulationStatus.dataset.status = timeSinceLastOrderUpdate < 2000 ? "acceptable" : "bad";
+		}else{
+			actualSimulationStatus.dataset.status = "good";
+		}
+	}
+
+	const simulationNow = globalThis.events.length > 0 ? globalThis.events.at(-1).timestamp : 0;
+	const bufferValue = Math.round(simulationNow - globalThis.simulationTime.now);
+	timelineBuffer.value = `${new Intl.NumberFormat().format(bufferValue)}ms`;
+	if(bufferValue > globalThis.simulation.bufferTime.min){
+		timelineBuffer.dataset.status = "good";
+	}else if(bufferValue > 0){
+		timelineBuffer.dataset.status = "acceptable";
+	}else{
+		timelineBuffer.dataset.status = "bad";
+	}
+
+	bufferedEvents.value = new Intl.NumberFormat().format(globalThis.events.length);
+	bufferedEvents.dataset.status = timelineBuffer.dataset.status;
+
+	if(!globalThis.nerdInfoTimeoutSet){
+		globalThis.nerdInfoTimeoutSet = true;
+		setTimeout(state => {
+			globalThis.nerdInfoTimeoutSet = false;
+			showNerdInfo(state);
+		}, 500, state);
+	}
+
 }
 
 /**
