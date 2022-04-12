@@ -67,15 +67,18 @@
 			<div id="nerd-log"></div>
 
 			<div id="visualizer">
-				<div class="network"></div>
-				<div class="blockchain"></div>
-			</div>
-
-			<div id="playControls">
-				<button type="button" id="play" class="paused">Play</button>
-					<button type="button" name="reset" id="reset" class="paused">Reset</button>
-					<input type="range" name="timeline" id="timeline" step="100" min="0">
-					<output></output>
+				<div class="network-container container">
+					<div class="network"></div>
+				</div>
+				<div class="blockchain">
+					<div class="aspect-reset"></div>
+				</div>
+				<div id="playControls">
+					<button type="button" id="play" class="paused">Play</button>
+						<button type="button" name="reset" id="reset" class="paused">Reset</button>
+						<input type="range" name="timeline" id="timeline" step="100" min="0">
+						<output></output>
+				</div>
 			</div>
 
 			<div class="front">

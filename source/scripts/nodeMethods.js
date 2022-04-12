@@ -48,7 +48,7 @@ export class AddressPacket extends Packet{
 		this.addresses = addresses;
 	}
 	get summary(){
-		return `adress${this.addresses.length > 1 ? "es": ""} for node${this.addresses.length > 1 ? "s": ""} ${new Intl.ListFormat('en-US', { style: 'long', type: 'conjunction' }).format(this.addresses.map(address => String(address)))}`;
+		return `adress${this.addresses.length > 1 ? "es" : ""} for node${this.addresses.length > 1 ? "s" : ""} ${new Intl.ListFormat("en-US", { style: "long", type: "conjunction" }).format(this.addresses.map(address => String(address)))}`;
 	}
 }
 
@@ -144,7 +144,7 @@ export class NodeData{
 	constructor(){
 		this.#address = newAddress();
 		this.#position = {
-			x: random("position", globalThis.settings.networkBoxRatio),
+			x: random("position", globalThis.settings.aspectRatio),
 			y: random("position"),
 		};
 
@@ -274,6 +274,10 @@ export function sendDrawEvent(data){
 	});
 }
 
+/**
+ * @param message
+ * @param data
+ */
 export function sendLogEvent(message, data){
 	return postMessage({
 		...{
@@ -286,23 +290,31 @@ export function sendLogEvent(message, data){
 	});
 }
 
+/**
+ * @param message
+ * @param data
+ */
 export function sendWarningEvent(message, data){
 	return sendLogEvent(
 		message,
 		{
 			severity: "warning",
 			...data,
-		}
+		},
 	);
 }
 
+/**
+ * @param message
+ * @param data
+ */
 export function sendErrorEvent(message, data){
 	return sendLogEvent(
 		message,
 		{
 			severity: "error",
 			...data,
-		}
+		},
 	);
 }
 
@@ -339,7 +351,7 @@ export function distance(position1, position2, useBoxRatio = false){
 		return (Math.sqrt(
 			((x1 - x2) ** 2) +
 			((y1 - y2) ** 2),
-		) / globalThis.settings.networkBoxRatio);
+		) / globalThis.settings.aspectRatio);
 	}else{
 		return Math.sqrt(
 			((x1 - x2) ** 2) +
@@ -364,7 +376,7 @@ export function distance(position1, position2, useBoxRatio = false){
 function middle({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
 	if(useBoxRatio){
 		return {
-			x: ((x1 + x2) / 2) / globalThis.settings.networkBoxRatio,
+			x: ((x1 + x2) / 2) / globalThis.settings.aspectRatio,
 			y: (y1 + y2) / 2,
 		};
 	}else{
@@ -420,6 +432,18 @@ export class BlockChain{
 		return new BlockChain(this);
 	}
 
+	get simpleRepresentation(){
+
+		const representation = [
+			this.blocks.map(block => `${block.previousId ? "" : ">"}${block.id}`).join(" => "),
+		];
+		if(this.branches.length > 0){
+			representation.push(this.branches.map(branch => branch.simpleRepresentation));
+		}
+
+		return representation;
+	}
+
 	#newBlock(block){
 		const newBlock = block.copy();
 		newBlock.localId = crypto.randomUUID();
@@ -443,7 +467,6 @@ export class BlockChain{
 			}),
 		];
 		this.blocks = [];
-
 		this.tidy();
 
 	}
@@ -462,13 +485,14 @@ export class BlockChain{
 	 * Also removes bloat like empty or duplicated branches.
 	 */
 	tidy(){
+		const DEBUG = false;
 		let effect;
 		let reruns = 0;
 		do{
 			reruns++;
 			effect = false;
 
-			if(reruns > 50){
+			if(reruns > 200){
 				throw new Error("Infinite loop detected when tidying a blockchain");
 			}
 
@@ -477,7 +501,7 @@ export class BlockChain{
 			 */
 			for(const { indexes, chain: branch } of this.branchEntries()){
 				if(indexes.length > 0 && branch.blocks.length === 0 && branch.branches.length === 0){
-					//console.log("remove chains with no blocks")
+					if(DEBUG) console.log("remove chains with no blocks", this.simpleRepresentation, branch.simpleRepresentation);
 
 					this.removeBranch(indexes);
 
@@ -491,11 +515,12 @@ export class BlockChain{
 			 */
 			for(const { chain: branch } of this.branchEntries()){
 				if(branch.branches.length === 1){
-					//console.log("streamline branches")
+					if(DEBUG) console.log("streamline branches", this.simpleRepresentation, branch.simpleRepresentation);
 					branch.blocks.push(...branch.branches[0].blocks);
 					branch.branches = branch.branches[0].branches;
 
 					effect = true;
+					break;
 				}
 			}
 
@@ -504,7 +529,8 @@ export class BlockChain{
 			 * This creates new branches that duplicate already existing information,
 			 * but it is important to be aware of every possible branch, so that's what we want.
 			 */
-			for(const { chain, localIndex, block } of this.entries()){
+			newBranches: for(const { chain, localIndex, block } of this.entries()){
+				//console.log(chain, localIndex, block);
 				const nextBlockBranches = Boolean(localIndex === chain.blocks.length - 1);
 
 
@@ -530,6 +556,8 @@ export class BlockChain{
 				for(const possibleBranch of this.findAll({previousId: block.id})){
 					const id = `${possibleBranch.block.id}${possibleBranch.block.previousId}`;
 					if(!currentBranches.has(id)){
+						if(DEBUG) console.log("add new branch", this.simpleRepresentation, chain.simpleRepresentation);
+						//console.log(id);
 						currentBranches.add(id);
 						const newChain = new BlockChain({
 							blocks: possibleBranch.chain.blocks.slice(possibleBranch.localIndex),
@@ -540,14 +568,15 @@ export class BlockChain{
 						}else{
 							chain.branches = [
 								new BlockChain({
-									blocks: chain.blocks.slice(localIndex),
+									blocks: chain.blocks.slice(localIndex + 1),
 									branches: chain.branches,
 								}),
 								newChain,
 							];
-							chain.blocks = chain.blocks.slice(0, localIndex);
+							chain.blocks = chain.blocks.slice(0, localIndex + 1);
 						}
 						effect = true;
+						break newBranches;
 					}
 				}
 
@@ -576,7 +605,7 @@ export class BlockChain{
 					}
 
 					if(index > -1){
-						//console.log("remove unbased branches");
+						if(DEBUG) console.log("remove unbased branches", this.simpleRepresentation, branch.simpleRepresentation);
 						branch.blocks.splice(0, index + 1);
 						effect = true;
 					}

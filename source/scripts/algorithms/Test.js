@@ -77,8 +77,6 @@ export async function process(packet, nodeData){
 
 			nodeData.blockchain.add(packet.block);
 
-			if(!nodeData.blockchain.has(packet.block)) console.log("whoops");
-
 			for(const address of nodeData.allAddressKeys){
 				sendPackets.push(new BlockPacket(address, nodeData.address, packet.block));
 			}
@@ -145,6 +143,11 @@ function updateBlockTrustLevels(nodeData){
 		setRecursiveBlockTrust(nodeData.blockchain, end.previousId);
 	}
 
+	/**
+	 * @param baseChain
+	 * @param blockId
+	 * @param trust
+	 */
 	function setRecursiveBlockTrust(baseChain, blockId, trust = 0){
 		if(blockId === undefined) return;
 		const trustIncrease = .1;

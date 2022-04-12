@@ -145,6 +145,11 @@ function updateBlockTrustLevels(nodeData){
 		setRecursiveBlockTrust(nodeData.blockchain, end.previousId);
 	}
 
+	/**
+	 * @param baseChain
+	 * @param blockId
+	 * @param trust
+	 */
 	function setRecursiveBlockTrust(baseChain, blockId, trust = 0){
 		if(blockId === undefined) return;
 		const trustIncrease = .1;

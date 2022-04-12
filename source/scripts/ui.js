@@ -5,6 +5,7 @@
  */
 
 import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simulationHandlers.js";
+import controls from "./controls.js";
 
 /**.
  * This is a JSON representation of all the different inputs that the simulation requires.
@@ -25,123 +26,9 @@ import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simu
  */
 
 globalThis.settings = {};
-const allInputs = {
-	simulation: {
-		type: "box",
-		description: "Settings related to the general simulation setup",
-		children: {
-			nerdInfo: {
-				type: "checkbox",
-				label: "Show info for nerds",
-				default: false,
-				description: "Show debug information regarding the simulation process",
-			},
-		},
-	},
-	network: {
-		type: "box",
-		description: "Settings related to the simulated network",
-		children: {
-			algorithms: {
-				type: "select",
-				label: "Verification",
-				options: [
-					"Bitcoin",
-					"PrebenCoin",
-					"Test",
-				],
-				default: "Bitcoin",
-				description: "Which blockchain protocol should be used in the simulation.",
-			},
-			nodes: {
-				type: "range",
-				min: 5,
-				max: 100,
-				default: 20,
-				description: "How many nodes should the simulation consist of.",
-			},
-			delay: {
-				type: "range",
-				min: 500,
-				max: 5000,
-				default: 1000,
-				unit: "ms",
-				description: "How slow should the network be. In other words; how many milliseconds should it take for a packet to move across the entire network visualization vertically.",
-			},
-		},
-	},
-	seed: {
-		type: "number",
-		min: 1,
-		max: 10000,
-		step: 1,
-		setTo: Math.floor(Math.random() * 10000),
-		description: `If you run the simulation multiple times with the same seed, then all runs will be identical. If you use different seeds, then the position of the nodes, as well as which nodes get to publish which blocks, and so on, are all different between runs.`,
-	},
-	attackers: {
-		type: "range",
-		min: 0,
-		max: 100,
-		unit: "%",
-		default: 50,
-		description: "The percentage of nodes trying to misuse the network. Read more about it in the text section.",
-	},
-	time: {
-		type: "range",
-		min: 0.5,
-		max: 2,
-		step: 0.1,
-		unit: "x",
-		default: 1,
-		description: "Use this to speed up or slow down the simulation to make it easier to follow along. This does not actually change anything in the simulation, it only changes the playback rate.",
-	},
-	nodes: {
-		type: "box",
-		description: "Settings related to the simulated network",
-		children: {
-			delay: {
-				type: "range",
-				min: 500,
-				max: 5000,
-				default: 1000,
-				unit: "ms",
-				description: "How slow new nodes are added to the network. In other words; how many milliseconds should it take for a new node to be added to the entire network visualization.",
-			},
-			startNodes: {
-				type: "range",
-				min: 1,
-				max: 100,
-				default: 5,
-				description: "How many nodes are added to the network in the start of the simulation. In other words; how many nodes the simulation start with having visualizatied.",
-			},
-			nodesToAdd: {
-				type: "range",
-				min: 1,
-				max: 10,
-				default: 5,
-				description: "How many nodes are added to the network everytime the network adds new nodes. In other words; how many nodes the simulation adds",
-			},
-		},
-	},
-	block: {
-		type: "box",
-		description: "Settings related to the simulated network",
-		children: {
-			delay: {
-				type: "range",
-				min: 500,
-				max: 5000,
-				default: 1000,
-				unit: "ms",
-				description: "How slow new the block should send packets to the network. In other words; how many milliseconds should it take for a new packet to be send to the other blocks in the network visualization.",
-			},
-		},
-	},
-};
-
 
 /**
- * Generates all input elements for the simulation, based on the variable `allInputs` defined above.
+ * Generates all input elements for the simulation, based on the variable `controls` defined above.
  *
  * @param {object} inputData - Description of the input elements to generate.
  * @param savedState
@@ -183,7 +70,7 @@ function generateInputs(inputData, savedState, parent){
 
 				parent.appendChild(select);
 				appendDataReader(select);
-				select.value = savedState?.[name] ?? data.setTo ?? data.default;
+				select.value = savedState?.[name] ?? data.setTo?.() ?? data.default;
 
 				// This makes the input handler run on this control, which saves the inital default value to `globalThis.settings`.
 				select.dispatchEvent(new InputEvent("input"));
@@ -204,7 +91,7 @@ function generateInputs(inputData, savedState, parent){
 
 				parent.appendChild(range);
 				appendDataReader(range);
-				range.value = savedState?.[name] ?? data.setTo ?? data.default;
+				range.value = savedState?.[name] ?? data.setTo?.() ?? data.default;
 
 				const output = document.createElement("output");
 
@@ -224,7 +111,7 @@ function generateInputs(inputData, savedState, parent){
 
 				parent.appendChild(checkbox);
 				appendDataReader(checkbox);
-				checkbox.checked = savedState?.[name] ?? data.setTo ?? data.default;
+				checkbox.checked = savedState?.[name] ?? data.setTo?.() ?? data.default;
 
 				// This makes the input handler run on this control, which saves the inital default value to `globalThis.settings`.
 				checkbox.dispatchEvent(new InputEvent("input"));
@@ -244,13 +131,40 @@ function generateInputs(inputData, savedState, parent){
 
 				parent.appendChild(number);
 				appendDataReader(number);
-				number.value = savedState?.[name] ?? data.setTo ?? data.default;
+				number.value = savedState?.[name] ?? data.setTo?.() ?? data.default;
 
 				// This makes the input handler run on this control, which saves the inital default value to `globalThis.settings`.
 				number.dispatchEvent(new InputEvent("input"));
 
 				break;
 			}
+
+		}
+
+		if(data.setTo !== undefined){
+			const updateButton = document.createElement("button");
+			updateButton.innerHTML = "update";
+			updateButton.classList.add("update");
+			updateButton.dataset.for = name;
+			parent.appendChild(updateButton);
+
+			updateButton.addEventListener("click", async event => {
+				const button = event.target;
+				const { controlsMetaScope } = findScopeFromDom(button);
+
+				let input = button;
+				while(input.id !== button.dataset.for){
+					input = input.previousElementSibling;
+				}
+
+				input.value = controlsMetaScope.type === "box" ?
+					controlsMetaScope.children[button.dataset.for].setTo() :
+					controlsMetaScope[button.dataset.for].setTo()
+				;
+
+				input.dispatchEvent(new InputEvent("input"));
+
+			});
 
 		}
 	}
@@ -270,42 +184,7 @@ function generateInputs(inputData, savedState, parent){
 		element.addEventListener("input", async event => {
 			const element = event.target;
 
-			/**
-			 * All of this is just to figure out if the control is inside one or more boxes.
-			 *
-			 * This is important because if, for example, the control "speed" was inside a box called "connection",
-			 * which was in turn inside a box called "network", then the value should be saved as:
-			 *
-			 * `globalThis.settings.network.connection.speed`.
-			 *
-			 * And not just as:
-			 *
-			 * `globalThis.settings.speed`.
-			 *
-			 * ..which could make it collide with other controls that also have that name, but are used for something other than network connections.
-			 *
-			 */
-
-			const scopes = [];
-			let domScope = element;
-
-			// Move up the tree of the control's DOM parents and save the name of each control box.
-			// Stop when encountering a parent that is not a control box.
-			while (domScope.parentElement.classList.contains("controlBox")) {
-				domScope = domScope.parentElement;
-
-				scopes.push(domScope.id);
-			}
-
-			// We have saved the box names going from the inside-out, but we want to create the settings element from the outside-in, so we reverse the order.
-			scopes.reverse();
-
-			// Now we iterate through each box name, and make sure an object is saved inside the `globalThis.settings` object with that name.
-			let settingsScope = globalThis.settings;
-			for (const scope of scopes) {
-				settingsScope[scope] ??= {};
-				settingsScope = settingsScope[scope];
-			}
+			const { settingsScope } = findScopeFromDom(element);
 
 			/**
 			 * At this point, we are left with the desired settings object structure. In the case of the above example, the object looks like:
@@ -348,6 +227,54 @@ function generateInputs(inputData, savedState, parent){
 			settingsReset();
 
 		});
+	}
+
+	function findScopeFromDom(element){
+
+		/**
+		 * All of this is just to figure out if the control is inside one or more boxes.
+		 *
+		 * This is important because if, for example, the control "speed" was inside a box called "connection",
+		 * which was in turn inside a box called "network", then the value should be saved as:
+		 *
+		 * `globalThis.settings.network.connection.speed`.
+		 *
+		 * And not just as:
+		 *
+		 * `globalThis.settings.speed`.
+		 *
+		 * ..which could make it collide with other controls that also have that name, but are used for something other than network connections.
+		 *
+		 */
+
+		const scopes = [];
+		let domScope = element;
+
+		// Move up the tree of the control's DOM parents and save the name of each control box.
+		// Stop when encountering a parent that is not a control box.
+		while (domScope.parentElement.classList.contains("controlBox")) {
+			domScope = domScope.parentElement;
+
+			scopes.push(domScope.id);
+		}
+
+		// We have saved the box names going from the inside-out, but we want to create the settings element from the outside-in, so we reverse the order.
+		scopes.reverse();
+
+		// Now we iterate through each box name, and make sure an object is saved inside the `globalThis.settings` object with that name.
+		let settingsScope = globalThis.settings;
+		let controlsMetaScope = controls;
+		for (const scope of scopes) {
+
+			settingsScope[scope] ??= {};
+			settingsScope = settingsScope[scope];
+
+			controlsMetaScope = controlsMetaScope.type === "box" ? controlsMetaScope.children[scope] : controlsMetaScope[scope];
+
+		}
+
+		return { settingsScope, controlsMetaScope };
+
 	}
 
 	/**
@@ -459,7 +386,7 @@ class Messages{
 class URLState{
 	constructor(settings){
 		this.#versionHash = this.#generateVersionHash(settings);
-		this.#restoreSettings(allInputs, {});
+		this.#restoreSettings(controls, {});
 
 		this.#finished = new Promise(resolve => {
 			/**
@@ -640,7 +567,7 @@ class URLState{
 	}
 	async update(){
 		this.#lastUpdate = Date.now();
-		const state = encodeURIComponent(await this.#generateState(allInputs, globalThis.settings));
+		const state = encodeURIComponent(await this.#generateState(controls, globalThis.settings));
 		const hash = encodeURIComponent(await this.#versionHash);
 		const now = encodeURIComponent(Math.round(globalThis.simulationTime.now / 100).toString(36));
 		history.replaceState(
@@ -882,7 +809,10 @@ export function resetSimulation(full = true){
 
 	// Remove all the DOM elements that represent the nodes, connections, and so on.
 	document.querySelector("#visualizer .network").innerHTML = "";
-	document.querySelector("#visualizer .blockchain").innerHTML = "";
+	document.querySelector("#visualizer .blockchain > .aspect-reset").innerHTML = "";
+
+	// Set the correct aspect ratio for the simulatio network
+	document.querySelector("#visualizer .network").style.setProperty("--aspect-ratio", globalThis.settings.aspectRatio);
 
 	if(full){
 
@@ -903,7 +833,7 @@ export function resetSimulation(full = true){
 async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, lastOrderUpdate: 0, lastOrder: true}){
 	const nerdInfo = document.getElementById("nerd-info");
 
-	if(globalThis.settings.simulation?.nerdInfo){
+	if(globalThis.settings.nerdInfo){
 		document.body.classList.add("nerd-info");
 	}else{
 		document.body.classList.remove("nerd-info");
@@ -987,24 +917,17 @@ async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, las
 
 }
 
+/**
+ * @param data
+ */
 export async function logMessage(data){
-	if(globalThis.settings.simulation?.nerdInfo === false) return;
+	if(globalThis.settings.nerdInfo === false) return;
 	const nerdLog = document.getElementById("nerd-log");
 	const log = document.createElement("output");
 	log.value = data.message;
 	log.dataset.severity = data.severity;
 	log.dataset.timestamp = data.timestamp;
 	nerdLog.insertBefore(log, nerdLog.firstChild);
-	/*
-	while(nerdLog.childElementCount > 10){
-		let i = childElementCount - 1;
-		let element;
-		do{
-			element = nerdLog.children[i];
-			i++;
-		}while(["warning", "error"].contains(element.dataset.severity));
-		element.remove();
-	}*/
 
 	if(data.severity === "error"){
 		globalThis.messages.new({
@@ -1014,6 +937,9 @@ export async function logMessage(data){
 	}
 }
 
+/**
+ *
+ */
 export async function highlightLogs(){
 	if(globalThis.settings.simulation?.nerdInfo === false) return;
 	const nerdLog = document.getElementById("nerd-log");
@@ -1083,25 +1009,10 @@ resetButton.addEventListener("click", () => {
 });
 
 /**
- * When the visualization runs, it needs to know the dimensions of the box that the visualization runs in.
- * Whenever the browser window changes size in any way, this function runs and saves the new network box ratio to `globalThis.settings`.
- *
- * In this visualization, it is assumed that the height of the network box is always 1,
- * so all that the simulation needs to know is the ratio between the height of the box and the width.
- *
- */
-async function updateNetworkBoxSize(){
-	const visualization = document.querySelector("#visualizer .network");
-	globalThis.settings.networkBoxRatio = visualization.clientWidth / visualization.clientHeight;
-}
-window.addEventListener("resize", updateNetworkBoxSize);
-updateNetworkBoxSize();
-
-/**
  * Set up the necessary classes to run the simulation. You can read more about each class in their respective files.
  */
 globalThis.messages = new Messages();
-globalThis.urlState = new URLState(allInputs);
+globalThis.urlState = new URLState(controls);
 await globalThis.urlState.finished;
 globalThis.eventDispatcher = new EventDispatcher();
 globalThis.simulationTime = new SimulationTime();
@@ -1112,7 +1023,7 @@ globalThis.timeline = new Timeline();
  * Running `generateInputs` here is what gets the whole app going. It doesn't just generate the controls,
  * but as a side product also generates the initial `globalThis.settings`, which in turn starts the simulation.
  */
-generateInputs(allInputs, globalThis.urlState.restoredSettings, document.getElementById("controls"));
+generateInputs(controls, globalThis.urlState.restoredSettings, document.getElementById("controls"));
 
 
 
@@ -1133,10 +1044,16 @@ verticalAlignButton.addEventListener("click", () => {
 	visualizer.scrollIntoView({behavior: "smooth"});
 });
 
-window.addEventListener("scroll", async () => {
-	if(Math.abs(visualizer.getBoundingClientRect().y) < 2){
-		document.body.classList.add("visualization-in-focus");
-	}else{
-		document.body.classList.remove("visualization-in-focus");
+window.addEventListener(
+	"scroll",
+	async () => {
+		if(Math.abs(visualizer.getBoundingClientRect().y) < 2){
+			document.body.classList.add("visualization-in-focus");
+		}else{
+			document.body.classList.remove("visualization-in-focus");
+		}
+	},
+	{
+		passive: true
 	}
-});
+);

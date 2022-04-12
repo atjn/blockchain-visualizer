@@ -317,7 +317,7 @@ export class EventDrawer{
 	#connections = new Map();
 	#blocks = new Map();
 	#networkBox = document.querySelector("#visualizer .network");
-	#chainBox = document.querySelector("#visualizer .blockchain");
+	#chainBox = document.querySelector("#visualizer .blockchain > .aspect-reset");
 
 	/**
 	 * This function is called to take a UI draw event and create the actual DOM elements displayed on screen, according to the event.
@@ -331,7 +331,7 @@ export class EventDrawer{
 					const node = document.createElement("div");
 					node.classList.add("node");
 					node.style.top = `${event.position.y * 100}%`;
-					node.style.left = `${(event.position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+					node.style.left = `${(event.position.x / globalThis.settings.aspectRatio) * 100}%`;
 
 					this.#networkBox.appendChild(node);
 					this.#nodes.set(event.address, node);
@@ -387,14 +387,14 @@ export class EventDrawer{
 				const delay = event.delay;
 
 				packet.style.top = `${event.position.from.y * 100}%`;
-				packet.style.left = `${(event.position.from.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				packet.style.left = `${(event.position.from.x / globalThis.settings.aspectRatio) * 100}%`;
 				packet.style.transitionDuration = `${delay}ms`;
 
 				this.#networkBox.appendChild(packet);
 
 				setTimeout((packet, position) => {
 					packet.style.top = `${position.y * 100}%`;
-					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+					packet.style.left = `${(position.x / globalThis.settings.aspectRatio) * 100}%`;
 				}, 1, packet, event.position.to);
 				setTimeout(packet => {packet.remove();}, delay + 1000, packet);
 
@@ -409,7 +409,7 @@ export class EventDrawer{
 				const delay = event.delay;
 
 				packet.style.top = `${event.position.from.y * 100}%`;
-				packet.style.left = `${(event.position.from.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				packet.style.left = `${(event.position.from.x / globalThis.settings.aspectRatio) * 100}%`;
 				packet.style.transitionDuration = `${delay}ms`;
 				packet.style.setProperty("--id", event.blockId);
 
@@ -417,7 +417,7 @@ export class EventDrawer{
 
 				setTimeout((packet, position) => {
 					packet.style.top = `${position.y * 100}%`;
-					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+					packet.style.left = `${(position.x / globalThis.settings.aspectRatio) * 100}%`;
 				}, 1, packet, event.position.to);
 				setTimeout(packet => packet.remove(), delay + 1000, packet);
 

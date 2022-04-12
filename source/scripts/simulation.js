@@ -215,8 +215,8 @@ class EventQueue{
 		}
 
 		if(trustedIndex > 0){
-			const blocksToTrim = globalChain.blocks.slice(0, trustedIndex+1)
-			sendLogEvent(`Trim fully trusted block${blocksToTrim.slice(0, -1).length > 1 ? "s" : ""} ${new Intl.ListFormat('en-US', { style: 'long', type: 'conjunction' }).format(blocksToTrim.slice(0, -1).map(block => block.id))}`);
+			const blocksToTrim = globalChain.blocks.slice(0, trustedIndex + 1);
+			sendLogEvent(`Trim fully trusted block${blocksToTrim.slice(0, -1).length > 1 ? "s" : ""} ${new Intl.ListFormat("en-US", { style: "long", type: "conjunction" }).format(blocksToTrim.slice(0, -1).map(block => block.id))}`);
 			for(const nodeData of globalThis.nodes.values()){
 				nodeData.blockchain.trimBase(blocksToTrim);
 			}
