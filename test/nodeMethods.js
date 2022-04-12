@@ -131,6 +131,7 @@ tap.test("BlockChain", async () => {
 
 	});
 
+	/*
 	tap.test("entries", async () => {
 
 		const testChains = generateTestChains();
@@ -154,5 +155,6 @@ tap.test("BlockChain", async () => {
 		}
 
 	});
+	*/
 
 });

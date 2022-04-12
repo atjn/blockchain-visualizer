@@ -159,9 +159,7 @@ function generateInputs(inputData, savedState, parent){
 
 				input.value = controlsMetaScope.type === "box" ?
 					controlsMetaScope.children[button.dataset.for].setTo() :
-					controlsMetaScope[button.dataset.for].setTo()
-				;
-
+					controlsMetaScope[button.dataset.for].setTo();
 				input.dispatchEvent(new InputEvent("input"));
 
 			});
@@ -229,6 +227,9 @@ function generateInputs(inputData, savedState, parent){
 		});
 	}
 
+	/**
+	 * @param element
+	 */
 	function findScopeFromDom(element){
 
 		/**
@@ -1054,6 +1055,6 @@ window.addEventListener(
 		}
 	},
 	{
-		passive: true
-	}
+		passive: true,
+	},
 );
