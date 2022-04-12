@@ -27,6 +27,9 @@ export class Packet{
 		this.delay = this.distance * globalThis.settings.network.delay;
 
 	}
+	get summary(){
+		return `a non-standard packet`;
+	}
 }
 
 /**
@@ -43,6 +46,9 @@ export class AddressPacket extends Packet{
 	constructor(to, from, addresses){
 		super(to, from);
 		this.addresses = addresses;
+	}
+	get summary(){
+		return `adress${this.addresses.length > 1 ? "es" : ""} for node${this.addresses.length > 1 ? "s" : ""} ${new Intl.ListFormat("en-US", { style: "long", type: "conjunction" }).format(this.addresses.map(address => String(address)))}`;
 	}
 }
 
@@ -61,6 +67,9 @@ export class BlockPacket extends Packet{
 		super(to, from);
 		this.block = block;
 	}
+	get summary(){
+		return `block ${this.block.id}`;
+	}
 }
 
 /**
@@ -77,13 +86,31 @@ export class NewBlockSignal extends Packet{
 	constructor(to){
 		super(to, to);
 	}
+	get summary(){
+		return `a new block`;
+	}
 }
 
 export class Block{
-	constructor(previousId, ranges){
+	constructor(previousId, ranges, copy){
 		this.#id = randomColor();
 		this.#previousId = previousId;
-		this.ranges = ranges || [{from: 1, to: this.#size}];
+		this.ranges = [...(ranges || [{from: 1, to: this.#size}])];
+
+		if(copy){
+			this.#id = copy.id;
+			this.trust = copy.trust;
+		}
+	}
+	copy(){
+		return new Block(
+			this.previousId,
+			this.ranges,
+			{
+				id: this.id,
+				trust: this.trust,
+			},
+		);
 	}
 	#id;
 	get id(){
@@ -92,6 +119,9 @@ export class Block{
 	#previousId;
 	get previousId(){
 		return this.#previousId;
+	}
+	setAsBase(){
+		this.#previousId = undefined;
 	}
 	#size = 10000;
 	get size(){
@@ -114,7 +144,7 @@ export class NodeData{
 	constructor(){
 		this.#address = newAddress();
 		this.#position = {
-			x: random("position", globalThis.settings.networkBoxRatio),
+			x: random("position", globalThis.settings.aspectRatio),
 			y: random("position"),
 		};
 
@@ -245,6 +275,50 @@ export function sendDrawEvent(data){
 }
 
 /**
+ * @param message
+ * @param data
+ */
+export function sendLogEvent(message, data){
+	return postMessage({
+		...{
+			type: "log",
+			timestamp: Math.round(globalThis.timestamp / 1000),
+			severity: "info",
+			message,
+		},
+		...data,
+	});
+}
+
+/**
+ * @param message
+ * @param data
+ */
+export function sendWarningEvent(message, data){
+	return sendLogEvent(
+		message,
+		{
+			severity: "warning",
+			...data,
+		},
+	);
+}
+
+/**
+ * @param message
+ * @param data
+ */
+export function sendErrorEvent(message, data){
+	return sendLogEvent(
+		message,
+		{
+			severity: "error",
+			...data,
+		},
+	);
+}
+
+/**
  * Calculates the distance between two nodes.
  *
  * @param {object} root0 - Position of node 1.
@@ -277,7 +351,7 @@ export function distance(position1, position2, useBoxRatio = false){
 		return (Math.sqrt(
 			((x1 - x2) ** 2) +
 			((y1 - y2) ** 2),
-		) / globalThis.settings.networkBoxRatio);
+		) / globalThis.settings.aspectRatio);
 	}else{
 		return Math.sqrt(
 			((x1 - x2) ** 2) +
@@ -302,7 +376,7 @@ export function distance(position1, position2, useBoxRatio = false){
 function middle({x: x1, y: y1}, {x: x2, y: y2}, useBoxRatio = false){
 	if(useBoxRatio){
 		return {
-			x: ((x1 + x2) / 2) / globalThis.settings.networkBoxRatio,
+			x: ((x1 + x2) / 2) / globalThis.settings.aspectRatio,
 			y: (y1 + y2) / 2,
 		};
 	}else{
@@ -347,28 +421,308 @@ export class PeerData{
 }
 
 export class BlockChain{
-	constructor({ chain = [], branches = [] }){
-		this.chain = chain;
-		this.branches = branches;
+	constructor({ blocks = [], branches = [] }){
+		this.blocks = blocks.map(this.#newBlock);
+		this.branches = branches.map(branch => branch.copy());
 	}
-	chain = [];
+	blocks = [];
 	branches = [];
 
-	find(id){
+	copy(){
+		return new BlockChain(this);
+	}
 
-		if(typeof id === "object"){
-			id = id.id;
+	get simpleRepresentation(){
+
+		const representation = [
+			this.blocks.map(block => `${block.previousId ? "" : ">"}${block.id}`).join(" => "),
+		];
+		if(this.branches.length > 0){
+			representation.push(this.branches.map(branch => branch.simpleRepresentation));
 		}
 
-		const index = this.chain.findIndex(block => block.id === id);
-		if(index !== -1) return { chain: this, index };
+		return representation;
+	}
 
-		for(const branch of this.branches){
-			const branchResult = branch.find(id);
-			if(branchResult.index !== -1) return branchResult;
+	#newBlock(block){
+		const newBlock = block.copy();
+		newBlock.localId = crypto.randomUUID();
+		return newBlock;
+	}
+
+	add(block){
+		const newBlock = this.#newBlock(block);
+
+		/**
+		 * Just lazily throw the new block into a new base branch,
+		 * and let `tidy()` connect the block and clean up properly.
+		 */
+		this.branches = [
+			new BlockChain({
+				blocks: this.blocks,
+				branches: this.branches,
+			}),
+			new BlockChain({
+				blocks: [newBlock],
+			}),
+		];
+		this.blocks = [];
+		this.tidy();
+
+	}
+
+	removeBranch(indexes){
+
+		let scope = this;
+		for(const index of indexes.slice(0, -1)) scope = scope.branches[index];
+
+		return scope.branches.splice(indexes.at(-1), 1);
+
+	}
+
+	/**
+	 * Makes sure that all blocks are correctly connected in all possible branch combinations.
+	 * Also removes bloat like empty or duplicated branches.
+	 */
+	tidy(){
+		const DEBUG = false;
+		let effect;
+		let reruns = 0;
+		do{
+			reruns++;
+			effect = false;
+
+			if(reruns > 200){
+				throw new Error("Infinite loop detected when tidying a blockchain");
+			}
+
+			/**
+			 * Remove chains that contain no blocks.
+			 */
+			for(const { indexes, chain: branch } of this.branchEntries()){
+				if(indexes.length > 0 && branch.blocks.length === 0 && branch.branches.length === 0){
+					if(DEBUG) console.log("remove chains with no blocks", this.simpleRepresentation, branch.simpleRepresentation);
+
+					this.removeBranch(indexes);
+
+					effect = true;
+					break;
+				}
+			}
+
+			/**
+			 * Remove unneccessary branching points that only branch out to one branch.
+			 */
+			for(const { chain: branch } of this.branchEntries()){
+				if(branch.branches.length === 1){
+					if(DEBUG) console.log("streamline branches", this.simpleRepresentation, branch.simpleRepresentation);
+					branch.blocks.push(...branch.branches[0].blocks);
+					branch.branches = branch.branches[0].branches;
+
+					effect = true;
+					break;
+				}
+			}
+
+			/**
+			 * Connect blocks that point to each other, but haven't been connected.
+			 * This creates new branches that duplicate already existing information,
+			 * but it is important to be aware of every possible branch, so that's what we want.
+			 */
+			newBranches: for(const { chain, localIndex, block } of this.entries()){
+				//console.log(chain, localIndex, block);
+				const nextBlockBranches = Boolean(localIndex === chain.blocks.length - 1);
+
+
+				/**
+				 * Save the ID's of all branches that already exist.
+				 */
+				const currentBranches = new Set();
+				if(nextBlockBranches){
+					for(const branch of chain.branches){
+						for(const currentBranch of branch.getStarts()){
+							currentBranches.add(`${currentBranch.id}${currentBranch.previousId}`);
+						}
+					}
+				}else{
+					//console.log(chain, localIndex, block);
+					const currentBranch = chain.blocks[localIndex + 1];
+					currentBranches.add(`${currentBranch.id}${currentBranch.previousId}`);
+				}
+
+				/**
+				 * If a new branch is found that doesn't already exist, then add that branch.
+				 */
+				for(const possibleBranch of this.findAll({previousId: block.id})){
+					const id = `${possibleBranch.block.id}${possibleBranch.block.previousId}`;
+					if(!currentBranches.has(id)){
+						if(DEBUG) console.log("add new branch", this.simpleRepresentation, chain.simpleRepresentation);
+						//console.log(id);
+						currentBranches.add(id);
+						const newChain = new BlockChain({
+							blocks: possibleBranch.chain.blocks.slice(possibleBranch.localIndex),
+							branches: possibleBranch.chain.branches,
+						});
+						if(nextBlockBranches){
+							chain.branches.push(newChain);
+						}else{
+							chain.branches = [
+								new BlockChain({
+									blocks: chain.blocks.slice(localIndex + 1),
+									branches: chain.branches,
+								}),
+								newChain,
+							];
+							chain.blocks = chain.blocks.slice(0, localIndex + 1);
+						}
+						effect = true;
+						break newBranches;
+					}
+				}
+
+			}
+
+			/**
+			 * If there are any branches without a complete base path,
+			 * which contain blocks that are also present elsewhere,
+			 * then remove those blocks from these branches.
+			 */
+			if(this.blocks.length === 0){
+				for(const branch of this.getStartBranches()){
+					if(branch.blocks[0].previousId === undefined){
+						continue;
+					}
+
+					let index = -1;
+					let foundElsewhere = true;
+					while(index + 1 < branch.blocks.length && foundElsewhere){
+						const block = branch.blocks[index + 1];
+						if(this.has(block, 2)){
+							index++;
+						}else{
+							foundElsewhere = false;
+						}
+					}
+
+					if(index > -1){
+						if(DEBUG) console.log("remove unbased branches", this.simpleRepresentation, branch.simpleRepresentation);
+						branch.blocks.splice(0, index + 1);
+						effect = true;
+					}
+				}
+			}
+
+			if(combineBranches(this)) effect = true;
+
+		}while(effect);
+
+		/**
+		 * Find identical branches connected to the same root and deduplicate them.
+		 *
+		 * @param chain
+		 */
+		function combineBranches(chain){
+			let effect = false;
+			let didCombineBranches;
+			do{
+				didCombineBranches = false;
+				combineBranchesLoop: for(const [ index, branch ] of chain.branches.entries()){
+					for(const [ otherIndex, otherBranch ] of chain.branches.entries()){
+						if(index >= otherIndex) continue;
+						let blockIndex = 0;
+						while(
+							branch.blocks.length > blockIndex &&
+						otherBranch.blocks.length > 0 &&
+						branch.blocks[blockIndex]?.id === otherBranch.blocks[0]?.id
+						){
+							blockIndex++;
+						}
+						if(blockIndex > 0){
+							//console.log("Combine branches")
+
+							otherBranch.blocks.shift(0, blockIndex);
+
+							const newBranch = new BlockChain(
+								branch.blocks.shift(0, blockIndex),
+								[ branch, otherBranch ],
+							);
+
+							chain.branches.push(newBranch);
+
+							branch.blocks = [];
+							branch.branches = [];
+							otherBranch.blocks = [];
+							otherBranch.branches = [];
+
+							didCombineBranches = true;
+							break combineBranchesLoop;
+						}
+					}
+				}
+				if(didCombineBranches) effect = true;
+			}while(didCombineBranches);
+
+			for(const branch of chain.branches) if(combineBranches(branch)) effect = true;
+
+			return effect;
 		}
 
-		return {chain: undefined, index: -1};
+	}
+
+	trimBase(blocks){
+
+		for(const block of blocks.slice(0, -1)){
+			for(const { chain, localIndex } of this.findAll(block)){
+				if(!chain) continue;
+				chain.blocks.splice(localIndex, 1);
+			}
+		}
+
+		for(const { chain, localIndex } of this.findAll(blocks.at(-1))){
+			if(!chain) continue;
+			chain.blocks[localIndex].setAsBase();
+		}
+
+		this.tidy();
+
+	}
+
+	getStarts(){
+
+		const starts = [];
+
+		if(this.blocks.length > 0){
+
+			starts.push(this.blocks[0]);
+
+		}else if(this.branches.length > 0){
+
+			for(const branch of this.branches){
+				starts.push(...branch.getStarts());
+			}
+
+		}
+
+		return starts;
+	}
+
+	getStartBranches(){
+
+		const startBranches = [];
+
+		if(this.blocks.length > 0){
+
+			startBranches.push(this);
+
+		}else{
+
+			for(const branch of this.branches){
+				startBranches.push(...branch.getStartBranches());
+			}
+
+		}
+
+		return startBranches;
 	}
 
 	getEnds(){
@@ -381,10 +735,122 @@ export class BlockChain{
 				ends.push(...branch.getEnds());
 			}
 
-		}else if(this.chain.length > 0){
-			ends.push(this.chain.at(-1));
+		}else if(this.blocks.length > 0){
+			ends.push(this.blocks.at(-1));
 		}
 
 		return ends;
+	}
+
+	/**
+	 * Finds the block with the given local identifier.
+	 *
+	 * @param {string | Block} localId - The previous id pointer of the block to find.
+	 * @returns {object} - A list of entries of blocks that fit the description.
+	 */
+	find(localId){
+
+		if(typeof localId === "object"){
+			localId = localId.localId;
+		}
+
+		for(const entry of this.entries()){
+			if(localId === entry.block.localId){
+				return entry;
+			}
+		}
+
+		return {};
+	}
+
+	/**
+	 * Finds all blocks in the blockchain that fits the given identifiers.
+	 * All identifiers are optional. If none are defined, this will return all blocks in the blockchain.
+	 *
+	 * @param {object | Block} param0 - An object containing the necessary identifiers. Compatible with a Block class.
+	 * @param {string} param0.id - The id of the block to find.
+	 * @param {string} param0.previousId - The previous id pointer of the block to find.
+	 * @returns {Array<object>} - A list of entries of blocks that fit the description.
+	 */
+	*findAll({ id = null, previousId = null }){
+
+		for(const entry of this.entries()){
+			if(
+				( id === null || entry.block.id === id ) &&
+				( previousId === null || entry.block.previousId === previousId )
+			){
+				yield entry;
+			}
+		}
+	}
+
+	/**
+	 * Finds all blocks in the blockchain that fits the given identifiers.
+	 * All identifiers are optional. If none are defined, this will return all blocks in the blockchain.
+	 *
+	 * @param {object | Block} param0 - An object containing the necessary identifiers. Compatible with a Block class.
+	 * @param {string} param0.id - The id of the block to find.
+	 * @param {string} param0.previousId - The previous id pointer of the block to find.
+	 * @param block
+	 * @param amount
+	 * @returns {boolean} - A list of entries of blocks that fit the description.
+	 */
+	has(block, amount = 1){
+
+		if([...this.findAll(block)].length >= amount) return true;
+
+		return false;
+	}
+
+	*entries(){
+
+		let globalIndex = 0;
+		for(const [ localIndex, block ] of this.blocks.entries()){
+			yield {
+				chainIndexes: [],
+				chain: this,
+				globalIndex,
+				localIndex,
+				block,
+			};
+			globalIndex++;
+		}
+
+		for(const [ branchIndex, branch ] of this.branches.entries()){
+			for(const blockEntry of branch.entries()){
+				blockEntry.chainIndexes.unshift(branchIndex);
+				blockEntry.globalIndex += globalIndex;
+				if(!blockEntry.block) console.warn("fuck the what");
+				yield blockEntry;
+			}
+		}
+
+	}
+
+	*branchEntries(){
+
+		yield { indexes: [], chain: this };
+
+		for(const [ index, branch ] of this.branches.entries()){
+			for(const entry of branch.branchEntries()){
+				entry.indexes.unshift(index);
+				yield entry;
+			}
+		}
+
+	}
+
+	*values(){
+		for(const block of this) yield block;
+	}
+
+	*[Symbol.iterator](){
+
+		for(const block of this.blocks) yield block;
+
+		for(const branch of this.branches){
+			for(const block of branch) yield block;
+		}
+
 	}
 }

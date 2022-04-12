@@ -1,6 +1,6 @@
 /**
  * @file
- * This is an implementation of the Bitcoin algorithm.
+ * .
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
@@ -45,7 +45,7 @@ export async function process(packet, nodeData){
 		}
 		activePeerContenders.sort((a, b) => a.distance - b.distance);
 		for(const [i, data] of activePeerContenders.entries()){
-			if(i + 1 < 4){
+			if(i + 1 < 10){
 				if(!nodeData.hasAddress(data.address)){
 					nodeData.setAddress(data.address, new PeerData({
 						distance: data.distance,
@@ -76,8 +76,6 @@ export async function process(packet, nodeData){
 		if(!nodeData.blockchain.has(packet.block)){
 
 			nodeData.blockchain.add(packet.block);
-
-			if(!nodeData.blockchain.has(packet.block)) console.log("whoops");
 
 			for(const address of nodeData.allAddressKeys){
 				sendPackets.push(new BlockPacket(address, nodeData.address, packet.block));

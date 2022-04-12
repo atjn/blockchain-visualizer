@@ -13,7 +13,8 @@
     "lint:html:nofix": "npm run lint:html",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
     "lint:nofix": "npm run lint:js:nofix && npm run lint:css:nofix && npm run lint:html:nofix",
-    "test": "npm install && npm run lint:nofix && npm run build",
+    "test:unit": "tap",
+    "test": "npm install && npm run lint:nofix && npm run test:unit && npm run build",
     "build": "node build.js"
   },
   "repository": {
@@ -35,11 +36,12 @@
     "@atjn/eslint-config": "^4.1.0",
     "@atjn/htmlvalidate-config": "^3.0.0",
     "@atjn/stylelint-config": "^2.0.0",
-    "eslint": "^8.12.0",
+    "eslint": "^8.13.0",
     "folder-hash": "^4.0.2",
     "fs-extra": "^10.0.1",
-    "html-validate": "^6.6.1",
+    "html-validate": "^6.7.1",
     "minify": "^8.0.4",
-    "stylelint": "^14.6.1"
+    "stylelint": "^14.6.1",
+    "tap": "^16.0.1"
   }
 }

@@ -18,9 +18,9 @@
  * whereas the UI events are strictly designed to tell the UI what to draw on the screen, and when.
  */
 
-import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal } from "./nodeMethods.js";
+import { Packet, AddressPacket, NodeData, sendDrawEvent, random, NewBlockSignal, BlockChain, sendErrorEvent, sendLogEvent } from "./nodeMethods.js";
+import { average, clampMin } from "./utilities.js";
 
-globalThis.timestamp = 0;
 
 /**
  * Handles messages being sent by the UI.
@@ -31,6 +31,7 @@ onmessage = async function (event){
 	switch (event.data.message) {
 		// Start the simulation by sending the `globalThis.settings` object from the UI controls.
 		case "start": {
+			sendLogEvent("Starting simulation");
 			globalThis.settings = event.data.settings;
 			const { process } = await import(`./algorithms/${globalThis.settings.network.algorithms}.js`);
 			globalThis.nodeProcess = process;
@@ -41,11 +42,13 @@ onmessage = async function (event){
 		}
 		// If the simulation is way ahead of the realtime playback, a `pause` command can be send to temporarily pause the simulation.
 		case "pause": {
+			sendLogEvent("Pausing simulation");
 			globalThis.settings.run = false;
 			break;
 		}
 		// Then when the realtime playback is running out of events, a `resume` commands can be send to start receiving new events again.
 		case "resume": {
+			sendLogEvent("Resuming simulation");
 			globalThis.settings.run = true;
 			globalThis.eventQueue.dequeue();
 			break;
@@ -61,7 +64,7 @@ class EventQueue{
 	#isSorted = true;
 	#dequeueing = false;
 	#dequeueStartTime = 0;
-	#maxDequeueTime = 3000;
+	#maxDequeueTime = 1500;
 
 	/**
 	 * Sorts the events by timestamp, meaning the next event is always first in line.
@@ -104,12 +107,12 @@ class EventQueue{
 		// If another version already runs, quit instantly. Otherwise make it known that this isntance is now running.
 		if(this.#dequeueing) return;
 		this.#dequeueing = true;
-		this.#dequeueStartTime = globalThis.timestamp;
+		this.#dequeueStartTime = Date.now();
 
 		// Go through every event in the queue (as long as the simulation isn't paused)
 		while(this.#events.length > 0 && globalThis.settings.run){
 
-			if(globalThis.timestamp - this.#dequeueStartTime > this.#maxDequeueTime){
+			if(Date.now() - this.#dequeueStartTime > this.#maxDequeueTime){
 				setTimeout(() => {globalThis.eventQueue.dequeue();}, 1);
 				break;
 			}
@@ -124,29 +127,56 @@ class EventQueue{
 			// Run the event
 			if(event instanceof FunctionEvent){
 
-				event.run?.call(event.with || {});
+				try{
+					event.run?.call(event.with || {});
+				}catch(error){
+					sendErrorEvent("An internal function encountered an error", {error});
+					throw error;
+				}
 
 			}else if (event instanceof NodeEvent){
 
 				// Get the node's data, hand it over to a node process, and then save the modified node data after the data packet has been processed
-				const { nodeData, sendPackets } = await globalThis.nodeProcess(
-					event.packet,
-					globalThis.nodes.get(event.packet.to),
-				);
 
-				const lastEnd = nodeData.blockchain.getEnds().at(-1);
-				if(lastEnd){
+				sendLogEvent(`Let node ${event.packet.to} process ${event.packet.summary} from ${event.packet.from === event.packet.to ? "a higher power" : `node ${event.packet.from}`}`);
+
+				let nodeData, sendPackets;
+				try{
+					const result = await globalThis.nodeProcess(
+						event.packet,
+						globalThis.nodes.get(event.packet.to),
+					);
+					nodeData = result.nodeData;
+					sendPackets = result.sendPackets;
+				}catch(error){
+					sendErrorEvent(`The node algorithm encountered an error`, {error});
+					throw error;
+				}
+
+				try{
+					const colors = nodeData.blockchain.getEnds().map(block => {
+						const { chain } = nodeData.blockchain.find(block);
+						let trust = 0;
+						for(const block of chain.blocks) trust += block.trust;
+						trust /= chain.blocks.length;
+						return {color: block.id, trust};
+					});
 					sendDrawEvent({
 						type: "nodeColor",
 						address: nodeData.address,
-						color: lastEnd.id,
+						colors,
 					});
-				}
 
-				globalThis.nodes.update(nodeData);
+					globalThis.nodes.update(nodeData);
 
-				for(const packet of sendPackets){
-					this.enqueue(new NodeEvent(packet, globalThis.timestamp));
+					this.#handleBlockchainEvents();
+
+					for(const packet of sendPackets){
+						this.enqueue(new NodeEvent(packet, globalThis.timestamp));
+					}
+				}catch(error){
+					sendErrorEvent("An error was encountered while handling the result of the node process", {error});
+					throw error;
 				}
 
 			}
@@ -155,6 +185,138 @@ class EventQueue{
 
 		// Make it known that no instances of `dequeue` are running anymore
 		this.#dequeueing = false;
+	}
+
+	#lastAllBlocks = new Map();
+	#handleBlockchainEvents(){
+		const events = [];
+
+		const globalChain = new BlockChain({});
+		const globalChainTrust = new Map();
+		for(const nodeData of globalThis.nodes.values()){
+			for(const block of nodeData.blockchain){
+				const id = `${block.id}${block.previousId}`;
+				if(!globalChainTrust.has(id)) globalChainTrust.set(id, {block, trusts: []});
+				globalChainTrust.get(id).trusts.push(block.trust);
+				globalChain.add(block);
+			}
+		}
+
+		for(const { block, trusts } of globalChainTrust.values()){
+			const trust = average(...trusts);
+			for(const { chain, localIndex } of globalChain.findAll(block)){
+				chain.blocks[localIndex].trust = trust;
+			}
+		}
+
+		let trustedIndex = 0;
+		while(trustedIndex < globalChain.blocks.length && globalChain.blocks[trustedIndex].trust === 1){
+			trustedIndex++;
+		}
+
+		if(trustedIndex > 0){
+			const blocksToTrim = globalChain.blocks.slice(0, trustedIndex + 1);
+			sendLogEvent(`Trim fully trusted block${blocksToTrim.slice(0, -1).length > 1 ? "s" : ""} ${new Intl.ListFormat("en-US", { style: "long", type: "conjunction" }).format(blocksToTrim.slice(0, -1).map(block => block.id))}`);
+			for(const nodeData of globalThis.nodes.values()){
+				nodeData.blockchain.trimBase(blocksToTrim);
+			}
+		}
+
+
+		const allBlocks = new Map();
+		const blockSizes = [];
+		defineBlockPosition(globalChain, allBlocks, blockSizes);
+
+		/**
+		 * @param chain
+		 * @param allBlocks
+		 * @param blockSizes
+		 * @param scope
+		 */
+		function defineBlockPosition(chain, allBlocks, blockSizes, scope = {top: 0, height: 100, left: 0}){
+
+			blockSizes.push(scope.height);
+
+			for(const block of chain.blocks){
+				block.top = scope.top + (scope.height / 2);
+				block.left = scope.left;
+				scope.left++;
+
+				allBlocks.set(`${block.id}${block.previousId}${block.localId}`, block);
+			}
+
+			const newHeight = scope.height / chain.branches.length;
+			let newTop = scope.top;
+			for(const branch of chain.branches){
+				defineBlockPosition(
+					branch,
+					allBlocks,
+					blockSizes,
+					{
+						top: newTop,
+						height: newHeight,
+						left: scope.left,
+					},
+				);
+				newTop += newHeight;
+			}
+		}
+
+		const blockSize = clampMin(2, 20, ...blockSizes);
+		for(const [ key, block ] of allBlocks.entries()){
+			block.left *= blockSize;
+			block.left += blockSize;
+			allBlocks.set(key, block);
+		}
+
+		//console.log([...new Set([...allBlocks.keys(), ...this.#lastAllBlocks.keys()])]);
+		for(const key of [...new Set([...allBlocks.keys(), ...this.#lastAllBlocks.keys()])]){
+			const oldBlock = this.#lastAllBlocks.get(key);
+			const newBlock = allBlocks.get(key);
+
+			if(!newBlock){
+				events.push({
+					action: "remove",
+					localId: oldBlock.localId,
+				});
+			}else if(!oldBlock){
+				events.push({
+					action: "add",
+					id: newBlock.id,
+					localId: newBlock.localId,
+					trust: newBlock.trust,
+					top: newBlock.top,
+					left: newBlock.left,
+				});
+			}else{
+				let needsUpdate = false;
+				const updates = {};
+				for(const key of [ "trust", "top", "left" ]){
+					if(newBlock[key] !== oldBlock[key]){
+						updates[key] = newBlock[key];
+						needsUpdate = true;
+					}
+				}
+
+				if(needsUpdate){
+					events.push({
+						action: "update",
+						localId: newBlock.localId,
+						...updates,
+					});
+				}
+			}
+		}
+
+		if(events.length > 0){
+			sendDrawEvent({
+				type: "chainUpdate",
+				blockSize,
+				events,
+			});
+		}
+
+		this.#lastAllBlocks = allBlocks;
 	}
 }
 

@@ -12,7 +12,7 @@
  * When the class is constructed, it automatically starts a Worker thread and passes the appropriate settings to it.
  */
 
-import { resetSimulation } from "./ui.js";
+import { resetSimulation, logMessage, highlightLogs } from "./ui.js";
 export class Simulation extends Worker{
 
 	/**
@@ -30,25 +30,33 @@ export class Simulation extends Worker{
 		 *
 		 * @param {object} event - The draw event.
 		 */
-		this.onmessage = event => {
+		this.addEventListener("message", event => {
 
-			// Save the draw event to the global event array.
-			globalThis.events.push(event.data);
 
-			// Pause the simulation if the returned draw event is too far in the future.
-			if(event.data.timestamp > globalThis.simulationTime.now + this.#bufferTime.max) this.pause();
+			if(event.data.type === "log"){
+
+				logMessage(event.data);
+
+			}else{
+
+				// Save the draw event to the global event array.
+				globalThis.events.push(event.data);
+
+				// Pause the simulation if the returned draw event is too far in the future.
+				if(event.data.timestamp > globalThis.simulationTime.now + this.#bufferTime.max) this.pause();
+			}
 
 			// Make sure the `eventDispatcher` is running to handle this new event.
 			globalThis.eventDispatcher.poke();
 
-		};
-		this.onerror = event => {
+		});
+		this.addEventListener("error", event => {
 			globalThis.messages.new({
 				type: "error",
-				text: "Sorry, there was an unexpected error in the simulation. This probably means the simulation won't work as intended.",
+				text: "Sorry, there was an error in the simulation. This probably means the simulation won't work as intended. You can see more details by anbling info for nerds in the settings pange.",
 			});
 			throw event;
-		};
+		});
 
 		// Send the command to start the simulation, and pass the `globalThis.settings` element.
 		this.postMessage({ message: "start", settings: globalThis.settings });
@@ -94,6 +102,9 @@ export class Simulation extends Worker{
 	}
 
 	#paused = false;
+	get paused(){
+		return this.#paused;
+	}
 }
 
 /**
@@ -267,6 +278,9 @@ export class EventDispatcher{
 			// Tell the `eventDrawer` to draw the event in the UI.
 			globalThis.eventDrawer.draw(event);
 
+			// Also make sure the correct logs are highlighted
+			highlightLogs();
+
 			// Prepare the next event
 			this.#nextEvent++;
 			event = globalThis.events[this.#nextEvent];
@@ -301,7 +315,9 @@ export class EventDrawer{
 
 	#nodes = new Map();
 	#connections = new Map();
+	#blocks = new Map();
 	#networkBox = document.querySelector("#visualizer .network");
+	#chainBox = document.querySelector("#visualizer .blockchain > .aspect-reset");
 
 	/**
 	 * This function is called to take a UI draw event and create the actual DOM elements displayed on screen, according to the event.
@@ -315,7 +331,7 @@ export class EventDrawer{
 					const node = document.createElement("div");
 					node.classList.add("node");
 					node.style.top = `${event.position.y * 100}%`;
-					node.style.left = `${(event.position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+					node.style.left = `${(event.position.x / globalThis.settings.aspectRatio) * 100}%`;
 
 					this.#networkBox.appendChild(node);
 					this.#nodes.set(event.address, node);
@@ -328,8 +344,21 @@ export class EventDrawer{
 			case "nodeColor": {
 
 				const node = this.#nodes.get(event.address);
-				node.style.setProperty("--color", event.color);
 
+				let combinedTrust = 0;
+				for(const color of event.colors) combinedTrust += color.trust;
+				const ratio = combinedTrust > 0 ? 360 / combinedTrust : 0;
+
+				const gradients = [];
+				let trustDegrees = 0;
+				for(const color of event.colors){
+					const start = trustDegrees * ratio;
+					trustDegrees += color.trust;
+					const end = trustDegrees * ratio;
+					gradients.push(`${color.color} ${start}deg ${end}deg`);
+				}
+
+				node.style.background = `conic-gradient(${gradients.join(",")})`;
 				break;
 			}
 			case "connection": {
@@ -358,14 +387,14 @@ export class EventDrawer{
 				const delay = event.delay;
 
 				packet.style.top = `${event.position.from.y * 100}%`;
-				packet.style.left = `${(event.position.from.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				packet.style.left = `${(event.position.from.x / globalThis.settings.aspectRatio) * 100}%`;
 				packet.style.transitionDuration = `${delay}ms`;
 
 				this.#networkBox.appendChild(packet);
 
 				setTimeout((packet, position) => {
 					packet.style.top = `${position.y * 100}%`;
-					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+					packet.style.left = `${(position.x / globalThis.settings.aspectRatio) * 100}%`;
 				}, 1, packet, event.position.to);
 				setTimeout(packet => {packet.remove();}, delay + 1000, packet);
 
@@ -380,7 +409,7 @@ export class EventDrawer{
 				const delay = event.delay;
 
 				packet.style.top = `${event.position.from.y * 100}%`;
-				packet.style.left = `${(event.position.from.x / globalThis.settings.networkBoxRatio) * 100}%`;
+				packet.style.left = `${(event.position.from.x / globalThis.settings.aspectRatio) * 100}%`;
 				packet.style.transitionDuration = `${delay}ms`;
 				packet.style.setProperty("--id", event.blockId);
 
@@ -388,12 +417,60 @@ export class EventDrawer{
 
 				setTimeout((packet, position) => {
 					packet.style.top = `${position.y * 100}%`;
-					packet.style.left = `${(position.x / globalThis.settings.networkBoxRatio) * 100}%`;
+					packet.style.left = `${(position.x / globalThis.settings.aspectRatio) * 100}%`;
 				}, 1, packet, event.position.to);
-				setTimeout(packet => {packet.remove();}, delay + 1000, packet);
+				setTimeout(packet => packet.remove(), delay + 1000, packet);
 
 				break;
 			}
+			case "chainUpdate": {
+
+				this.#updateChain(event);
+
+			}
 		}
+	}
+
+	#updateChain(event){
+
+		this.#chainBox.style.setProperty("--block-size", `${event.blockSize}%`);
+
+		for(const blockEvent of event.events){
+			switch(blockEvent.action){
+				case "remove": {
+					const block = this.#blocks.get(blockEvent.localId);
+					if(block){
+						block?.remove();
+						this.#blocks.delete(blockEvent.localId);
+					}
+					break;
+				}
+				case "add": {
+					const block = document.createElement("div");
+					block.classList.add("block");
+					block.style.setProperty("--id", blockEvent.id);
+					block.style.setProperty("--trust", blockEvent.trust);
+					block.style.top = `${blockEvent.top}%`;
+					block.style.left = `${blockEvent.left}%`;
+					this.#chainBox.appendChild(block);
+					this.#blocks.set(blockEvent.localId, block);
+					break;
+				}
+				case "update": {
+					const block = this.#blocks.set(blockEvent.localId);
+					if(blockEvent.trust !== undefined){
+						block.style.setProperty("--trust", blockEvent.trust);
+					}
+					if(blockEvent.top !== undefined){
+						block.style.top = `${blockEvent.top}%`;
+					}
+					if(blockEvent.left !== undefined){
+						block.style.left = `${blockEvent.left}%`;
+					}
+					break;
+				}
+			}
+		}
+
 	}
 }
