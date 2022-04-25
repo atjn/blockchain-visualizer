@@ -377,10 +377,6 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	width: 60vw;
 }
 
-#timeline + output {
-	text-align: right;
-}
-
 footer {
 	background-color: #9494943B;
 	display: flex;
