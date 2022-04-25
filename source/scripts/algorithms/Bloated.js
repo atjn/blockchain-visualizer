@@ -9,9 +9,9 @@ export const description =
 `
 This algorithm uses more resources than it needs to. It connects to too many peers and sends too much data.
 It technically works, but it wastes massive amounts of resources, and in a large enough network, that makes it practically impossible to run.
-`
+`;
 
-/**.
+/**
  * Takes a special input object with the node's local storage, along with a new
  * data packet that it should process.
  * Then posts a return message with a special object with the local storage again
@@ -141,7 +141,11 @@ export async function process(packet, nodeData){
 }
 
 /**
- * @param nodeData
+ * Sets the trust level of each block in the chain.
+ * This is done by seeing how many blocks have been built on to of that block.
+ * When more than ten other blocks have been built, it is fully trusted.
+ *
+ * @param {NodeData} nodeData - The node's data.
  */
 function updateBlockTrustLevels(nodeData){
 
@@ -152,9 +156,12 @@ function updateBlockTrustLevels(nodeData){
 	}
 
 	/**
-	 * @param baseChain
-	 * @param blockId
-	 * @param trust
+	 * A recurive method to set the trust levels of all blocks,
+	 * going from the end of the chain all the way back to its root.
+	 *
+	 * @param {BlockChain} baseChain - The root chain that the block is somewhere on (can be a branch).
+	 * @param {number} blockId - The ID of the block to find.
+	 * @param {number} trust - The trust level that the block should be set to.
 	 */
 	function setRecursiveBlockTrust(baseChain, blockId, trust = 0){
 		if(blockId === undefined) return;
@@ -170,6 +177,14 @@ function updateBlockTrustLevels(nodeData){
 
 }
 
+/**
+ * Cleans up any branches that are clearly not going to continue.
+ * If there are more than one branch, any branch that is more than three blocks behind the longest branch is removed.
+ * The node can be very confident that this branch won't be necessary to keep, becuase it knows that
+ * all the other nodes are going to build new blocks on the longest available branch.
+ *
+ * @param {NodeData} nodeData - The node's data.
+ */
 function removeAbandonedBranches(nodeData){
 
 	const ends = nodeData.blockchain.getEnds();

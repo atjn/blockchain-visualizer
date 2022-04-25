@@ -9,9 +9,9 @@ export const description =
 `
 This algorithm does not consider that there can be multiple branches of the blockchain.
 The lack of a mechanism to weed out temporary branches, means the blockchain quickly becomes messy and hard to use.
-`
+`;
 
-/**.
+/**
  * Takes a special input object with the node's local storage, along with a new
  * data packet that it should process.
  * Then posts a return message with a special object with the local storage again
@@ -151,7 +151,11 @@ export async function process(packet, nodeData){
 }
 
 /**
- * @param nodeData
+ * Sets the trust level of each block in the chain.
+ * This is done by seeing how many blocks have been built on to of that block.
+ * When more than ten other blocks have been built, it is fully trusted.
+ *
+ * @param {NodeData} nodeData - The node's data.
  */
 function updateBlockTrustLevels(nodeData){
 
@@ -162,9 +166,12 @@ function updateBlockTrustLevels(nodeData){
 	}
 
 	/**
-	 * @param baseChain
-	 * @param blockId
-	 * @param trust
+	 * A recurive method to set the trust levels of all blocks,
+	 * going from the end of the chain all the way back to its root.
+	 *
+	 * @param {BlockChain} baseChain - The root chain that the block is somewhere on (can be a branch).
+	 * @param {number} blockId - The ID of the block to find.
+	 * @param {number} trust - The trust level that the block should be set to.
 	 */
 	function setRecursiveBlockTrust(baseChain, blockId, trust = 0){
 		if(blockId === undefined) return;
