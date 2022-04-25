@@ -746,7 +746,7 @@ export class BlockChain{
 	 * Finds the block with the given local identifier.
 	 *
 	 * @param {string | Block} localId - The previous id pointer of the block to find.
-	 * @returns {object} - A list of entries of blocks that fit the description.
+	 * @returns {object} - The block that fit the description.
 	 */
 	find(localId){
 
