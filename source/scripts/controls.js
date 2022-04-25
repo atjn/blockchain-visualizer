@@ -7,7 +7,7 @@ export default {
 			const maxSpace = document.querySelector("#visualizer .network-container");
 			return maxSpace.clientWidth / maxSpace.clientHeight;
 		},
-		description: "Show debug information regarding the simulation process",
+		description: "The width-to-height ration of the box that the simulation is being run in",
 	},
 	seed: {
 		type: "number",
@@ -16,14 +16,6 @@ export default {
 		step: 1,
 		setTo: () => Math.floor(Math.random() * 10000),
 		description: `If you run the simulation multiple times with the same seed, then all runs will be identical. If you use different seeds, then the position of the nodes, as well as which nodes get to publish which blocks, and so on, are all different between runs.`,
-	},
-	attackers: {
-		type: "range",
-		min: 0,
-		max: 100,
-		unit: "%",
-		default: 50,
-		description: "The percentage of nodes trying to misuse the network. Read more about it in the text section.",
 	},
 	network: {
 		type: "box",
@@ -38,15 +30,15 @@ export default {
 					"Sparse",
 					"Naive",
 				],
-				default: "Bitcoin",
-				description: "Which blockchain protocol should be used in the simulation.",
+				default: "Balanced",
+				description: "Which blockchain protocol should be used in the simulation",
 			},
 			nodes: {
 				type: "range",
 				min: 5,
 				max: 100,
 				default: 20,
-				description: "How many nodes should the simulation consist of.",
+				description: "How many nodes should the simulation consist of",
 			},
 			delay: {
 				type: "range",
@@ -60,7 +52,7 @@ export default {
 	},
 	nodes: {
 		type: "box",
-		description: "Settings related to the simulated network",
+		description: "Settings related to the simulated nodes",
 		children: {
 			delay: {
 				type: "range",
@@ -68,7 +60,7 @@ export default {
 				max: 5000,
 				default: 1000,
 				unit: "ms",
-				description: "How slow new nodes are added to the network. In other words; how many milliseconds should it take for a new node to be added to the entire network visualization.",
+				description: "How slowly new nodes are added to the network. In other words; how many milliseconds should it take for a new node to be added to the entire network visualization.",
 			},
 			startNodes: {
 				type: "range",
@@ -88,7 +80,7 @@ export default {
 	},
 	block: {
 		type: "box",
-		description: "Settings related to the simulated network",
+		description: "Settings related to the simuluated blocks",
 		children: {
 			delay: {
 				type: "range",
@@ -96,7 +88,7 @@ export default {
 				max: 5000,
 				default: 1000,
 				unit: "ms",
-				description: "How slow new the block should send packets to the network. In other words; how many milliseconds should it take for a new packet to be send to the other blocks in the network visualization.",
+				description: "How often a new block should be discovered on the network (in milliseconds)",
 			},
 		},
 	},
@@ -104,6 +96,6 @@ export default {
 		type: "checkbox",
 		label: "Show info for nerds",
 		default: false,
-		description: "Show debug information regarding the simulation process",
+		description: "Show debug information regarding the simulation process. Please note that it uses significantly more resources",
 	},
 };

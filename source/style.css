@@ -300,13 +300,49 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	padding: 1vh;
 }
 
+#controls button {
+	cursor: pointer;
+}
+
+#controls .controlBox {
+	padding-left: 20px;
+}
+
 #controls label {
 	display: block;
 	margin-top: 7px;
 }
 
-#controls .controlBox {
-	padding-left: 20px;
+#controls .tooltip {
+	aspect-ratio: 1;
+	height: 16px;
+	vertical-align: middle;
+	margin-left: 5px;
+	margin-bottom: 4px;
+	border: none;
+	background-color: unset;
+	background-image: url("./images/help.svg");
+	background-size: contain;
+}
+
+#controls .tooltip-dialog {
+	background-color: #3E3E3E;
+	color: white;
+}
+
+#controls .tooltip-dialog::backdrop {
+	backdrop-filter: blur(2px);
+}
+
+#controls .update {
+	aspect-ratio: 1;
+	height: 20px;
+	vertical-align: middle;
+	margin-left: 5px;
+	border: none;
+	background-color: unset;
+	background-image: url("./images/replay.svg");
+	background-size: contain;
 }
 
 #timeline {
