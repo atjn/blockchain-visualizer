@@ -48,6 +48,8 @@ function generateInputs(inputData, savedState, parent){
 
 			// Generate a tooltip icon
 			const tooltip = document.createElement("button");
+			tooltip.title = data.description;
+			tooltip.ariaLabel = data.description;
 			tooltip.classList.add("tooltip");
 			tooltip.for = name;
 			label.appendChild(tooltip);
@@ -176,6 +178,8 @@ function generateInputs(inputData, savedState, parent){
 
 		if(data.setTo !== undefined){
 			const updateButton = document.createElement("button");
+			updateButton.title = "Reset this value";
+			updateButton.ariaLabel = "Reset this value";
 			updateButton.classList.add("update");
 			updateButton.dataset.for = name;
 			parent.appendChild(updateButton);
@@ -1018,13 +1022,15 @@ playButton.addEventListener("click", event => {
 		// Button was paused, resume playback
 		globalThis.simulationTime.resume();
 		globalThis.timeline.poke(true);
-		button.innerText = "Pause";
+		button.title = "Pause simulation";
+		button.ariaLabel = "Pause simulation";
 		button.classList.remove("paused");
 	}else{
 		// Button was playing, pause playback
 		globalThis.simulationTime.pause();
 		globalThis.timeline.poke(true);
-		button.innerText = "Play";
+		button.title = "Play simulation";
+		button.ariaLabel = "Play simulation";
 		button.classList.add("paused");
 		globalThis.urlState.update();
 	}
