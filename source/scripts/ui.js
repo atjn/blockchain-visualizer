@@ -1032,6 +1032,14 @@ playButton.addEventListener("click", event => {
 
 const resetButton = document.getElementById("reset");
 resetButton.addEventListener("click", () => {
+
+	if(!playButton.classList.contains("paused")){
+		playButton.click();
+	}
+
+	globalThis.simulationTime.reset();
+	globalThis.timeline.poke(true);
+
 	resetSimulation(false);
 });
 
