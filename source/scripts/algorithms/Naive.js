@@ -1,9 +1,15 @@
 /**
  * @file
- * This is an implementation of the Bitcoin algorithm.
+ * Check the description below.
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
+
+export const description =
+`
+This algorithm does not consider that there can be multiple branches of the blockchain.
+The lack of a mechanism to weed out temporary branches, means the blockchain quickly becomes messy and hard to use.
+`
 
 /**.
  * Takes a special input object with the node's local storage, along with a new
@@ -16,7 +22,12 @@ import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData }
  * @param {NodeData} nodeData - The node's data.
  */
 export async function process(packet, nodeData){
+
+	// Packets to send to other nodes
 	const sendPackets = [];
+
+	// A list of any addresses that the node has ever processed in any way.
+	// The addresses map to a timestamp of when they were last heard.
 	nodeData.heardAddresses ??= new Map();
 
 	if(packet instanceof AddressPacket){
@@ -24,12 +35,16 @@ export async function process(packet, nodeData){
 		// Make sure the node is not processing its own address
 		packet.addresses = packet.addresses.filter(address => address !== nodeData.address);
 
+		// Update the records to show that it has "heard" about these adresses now
+		// If it has never heard of the address before, add it to a list of completely new addresses
 		const newAddresses = [];
 		for(const address of packet.addresses){
 			if(!nodeData.heardAddresses.has(address)) newAddresses.push(address);
 			nodeData.heardAddresses.set(address, globalThis.timestamp);
 		}
 
+		// Decide which peers the node should talk actively to.
+		// Currently decided by finding the 5 nearest nodes along with the node farthest away.
 		const activePeerContenders = [];
 		for(const [peerAddress, peerData] of nodeData.allAddressEntries){
 			activePeerContenders.push({
@@ -45,25 +60,29 @@ export async function process(packet, nodeData){
 		}
 		activePeerContenders.sort((a, b) => a.distance - b.distance);
 		for(const [i, data] of activePeerContenders.entries()){
-			if(i + 1 < 4){
+			if(i < 5 || i === activePeerContenders.length - 1){
+				// Add the 5 closest nodes and add the node that is farthest away
 				if(!nodeData.hasAddress(data.address)){
 					nodeData.setAddress(data.address, new PeerData({
 						distance: data.distance,
 					}));
 				}
 			}else{
+				// Remove any other node
 				if(nodeData.hasAddress(data.address)){
 					nodeData.deleteAddress(data.address);
 				}
 			}
 		}
 
+		// Update timestamps for last transmission to each node
 		for(const [peerAddress, peerData] of nodeData.allAddressEntries){
 			if(!peerData.lastTransmit){
 				sendPackets.push(new AddressPacket(peerAddress, nodeData.address, [nodeData.address]));
 			}
 		}
 
+		// If new addresses were discovered, send those to all active peers.
 		if(newAddresses.length > 0){
 			for(const address of nodeData.allAddressKeys){
 				if(newAddresses.includes(address)) continue;
@@ -73,11 +92,10 @@ export async function process(packet, nodeData){
 
 	}else if(packet instanceof BlockPacket){
 
+		// If the block is not already in the chain, then add it and rebroadcast it to peers.
 		if(!nodeData.blockchain.has(packet.block)){
 
 			nodeData.blockchain.add(packet.block);
-
-			if(!nodeData.blockchain.has(packet.block)) console.log("whoops");
 
 			for(const address of nodeData.allAddressKeys){
 				sendPackets.push(new BlockPacket(address, nodeData.address, packet.block));
@@ -90,24 +108,20 @@ export async function process(packet, nodeData){
 
 		let block;
 
+		// Find an end and place the block on that.
+
 		if(ends.length > 0){
+			const entry = nodeData.blockchain.find(ends[0]);
 
-			let bestBlock;
-			for(const block of ends){
-				if(block.trust >= (bestBlock?.trust || 0)){
-					bestBlock = block;
-				}
-			}
-			const { chain } = nodeData.blockchain.find(bestBlock);
-
-			block = new Block(bestBlock.id);
-			chain.blocks.push(block);
+			block = new Block(entry.block.id);
+			entry.chain.blocks.push(block);
 
 		}else{
 			block = new Block();
 			nodeData.blockchain.add(block);
 		}
 
+		// Then send information about the new block to all active nodes
 		for(const address of nodeData.allAddressKeys){
 			sendPackets.push(new BlockPacket(address, nodeData.address, block));
 		}
@@ -116,12 +130,14 @@ export async function process(packet, nodeData){
 
 	updateBlockTrustLevels(nodeData);
 
+	// Update last transmission time for all nodes that packets will be sent to
 	for(const packet of sendPackets){
 		const peerData = nodeData.getAddress(packet.to);
 		peerData.lastTransmit = globalThis.timestamp;
 		nodeData.setAddress(packet.to, peerData);
 	}
 
+	// Update the "last heard" timestamp for the packet sender address
 	if(packet.from !== nodeData.id){
 		if(nodeData.hasAddress(packet.from)){
 			const peerData = nodeData.getAddress(packet.from);

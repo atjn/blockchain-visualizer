@@ -1,9 +1,15 @@
 /**
  * @file
- * .
+ * Check the description below.
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
+
+export const description =
+`
+This algorithm uses sensible defaults for all aspects of operation.
+It works in most conditions and does not have any obvious defects that can be exploited.
+`
 
 /**.
  * Takes a special input object with the node's local storage, along with a new
@@ -16,7 +22,12 @@ import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData }
  * @param {NodeData} nodeData - The node's data.
  */
 export async function process(packet, nodeData){
+
+	// Packets to send to other nodes
 	const sendPackets = [];
+
+	// A list of any addresses that the node has ever processed in any way.
+	// The addresses map to a timestamp of when they were last heard.
 	nodeData.heardAddresses ??= new Map();
 
 	if(packet instanceof AddressPacket){
@@ -33,7 +44,7 @@ export async function process(packet, nodeData){
 		}
 
 		// Decide which peers the node should talk actively to.
-		// Currently decided by finding the 10 nearest nodes.
+		// Currently decided by finding the 5 nearest nodes along with the node farthest away.
 		const activePeerContenders = [];
 		for(const [peerAddress, peerData] of nodeData.allAddressEntries){
 			activePeerContenders.push({
@@ -49,13 +60,15 @@ export async function process(packet, nodeData){
 		}
 		activePeerContenders.sort((a, b) => a.distance - b.distance);
 		for(const [i, data] of activePeerContenders.entries()){
-			if(i + 1 < 10){
+			if(i < 5 || i === activePeerContenders.length - 1){
+				// Add the 5 closest nodes and add the node that is farthest away
 				if(!nodeData.hasAddress(data.address)){
 					nodeData.setAddress(data.address, new PeerData({
 						distance: data.distance,
 					}));
 				}
 			}else{
+				// Remove any other node
 				if(nodeData.hasAddress(data.address)){
 					nodeData.deleteAddress(data.address);
 				}
@@ -119,6 +132,7 @@ export async function process(packet, nodeData){
 			nodeData.blockchain.add(block);
 		}
 
+		// Then send information about the new block to all active nodes
 		for(const address of nodeData.allAddressKeys){
 			sendPackets.push(new BlockPacket(address, nodeData.address, block));
 		}
@@ -136,7 +150,7 @@ export async function process(packet, nodeData){
 		nodeData.setAddress(packet.to, peerData);
 	}
 
-	// Who knows man
+	// Update the "last heard" timestamp for the packet sender address
 	if(packet.from !== nodeData.id){
 		if(nodeData.hasAddress(packet.from)){
 			const peerData = nodeData.getAddress(packet.from);
