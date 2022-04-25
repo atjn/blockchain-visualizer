@@ -24,12 +24,16 @@ export async function process(packet, nodeData){
 		// Make sure the node is not processing its own address
 		packet.addresses = packet.addresses.filter(address => address !== nodeData.address);
 
+		// Update the records to show that it has "heard" about these adresses now
+		// If it has never heard of the address before, add it to a list of completely new addresses
 		const newAddresses = [];
 		for(const address of packet.addresses){
 			if(!nodeData.heardAddresses.has(address)) newAddresses.push(address);
 			nodeData.heardAddresses.set(address, globalThis.timestamp);
 		}
 
+		// Decide which peers the node should talk actively to.
+		// Currently decided by finding the 10 nearest nodes.
 		const activePeerContenders = [];
 		for(const [peerAddress, peerData] of nodeData.allAddressEntries){
 			activePeerContenders.push({
@@ -58,12 +62,14 @@ export async function process(packet, nodeData){
 			}
 		}
 
+		// Update timestamps for last transmission to each node
 		for(const [peerAddress, peerData] of nodeData.allAddressEntries){
 			if(!peerData.lastTransmit){
 				sendPackets.push(new AddressPacket(peerAddress, nodeData.address, [nodeData.address]));
 			}
 		}
 
+		// If new addresses were discovered, send those to all active peers.
 		if(newAddresses.length > 0){
 			for(const address of nodeData.allAddressKeys){
 				if(newAddresses.includes(address)) continue;
@@ -73,6 +79,7 @@ export async function process(packet, nodeData){
 
 	}else if(packet instanceof BlockPacket){
 
+		// If the block is not already in the chain, then add it and rebroadcast it to peers.
 		if(!nodeData.blockchain.has(packet.block)){
 
 			nodeData.blockchain.add(packet.block);
@@ -88,18 +95,24 @@ export async function process(packet, nodeData){
 
 		let block;
 
+		// Find the most trusted end and place the block on that.
+		// The most trusted block in this case, is the block that is based on the longest chain of other blocks.
+
 		if(ends.length > 0){
 
-			let bestBlock;
+			let bestEntry;
 			for(const block of ends){
-				if(block.trust >= (bestBlock?.trust || 0)){
-					bestBlock = block;
-				}
-			}
-			const { chain } = nodeData.blockchain.find(bestBlock);
 
-			block = new Block(bestBlock.id);
-			chain.blocks.push(block);
+				const entry = nodeData.blockchain.find(block);
+
+				if(entry.globalIndex >= (bestEntry?.globalIndex || 0)){
+					bestEntry = entry;
+				}
+
+			}
+
+			block = new Block(bestEntry.block.id);
+			bestEntry.chain.blocks.push(block);
 
 		}else{
 			block = new Block();
@@ -114,12 +127,16 @@ export async function process(packet, nodeData){
 
 	updateBlockTrustLevels(nodeData);
 
+	removeAbandonedBranches(nodeData);
+
+	// Update last transmission time for all nodes that packets will be sent to
 	for(const packet of sendPackets){
 		const peerData = nodeData.getAddress(packet.to);
 		peerData.lastTransmit = globalThis.timestamp;
 		nodeData.setAddress(packet.to, peerData);
 	}
 
+	// Who knows man
 	if(packet.from !== nodeData.id){
 		if(nodeData.hasAddress(packet.from)){
 			const peerData = nodeData.getAddress(packet.from);
@@ -157,6 +174,28 @@ function updateBlockTrustLevels(nodeData){
 
 			chain.blocks[localIndex].trust = Math.max(block.trust, trust);
 			setRecursiveBlockTrust(baseChain, block.previousId, trust);
+		}
+	}
+
+}
+
+function removeAbandonedBranches(nodeData){
+
+	const ends = nodeData.blockchain.getEnds();
+
+	const endEntries = ends.map(end => nodeData.blockchain.find(end));
+
+	let bestEntry;
+	for(const entry of endEntries){
+		if(entry.globalIndex >= (bestEntry?.globalIndex || 0)){
+			bestEntry = entry;
+		}
+	}
+
+	for(const entry of endEntries){
+
+		if(entry.globalIndex < bestEntry.globalIndex - 3){
+			nodeData.blockchain.removeBranch(entry.chainIndexes);
 		}
 	}
 
