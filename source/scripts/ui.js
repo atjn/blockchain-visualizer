@@ -1045,6 +1045,8 @@ resetButton.addEventListener("click", () => {
 
 	globalThis.simulationTime.reset();
 	globalThis.timeline.poke(true);
+
+	resetSimulation(false);
 });
 
 /**
