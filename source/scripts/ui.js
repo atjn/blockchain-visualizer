@@ -40,9 +40,42 @@ function generateInputs(inputData, savedState, parent){
 
 		// Create a label for the control
 		const label = document.createElement("label");
-		label.innerHTML = `${data.label || name[0].toUpperCase() + name.slice(1)}:`;
+		label.innerText = `${data.label || name[0].toUpperCase() + name.slice(1)}`;
 		label.for = name;
 		parent.appendChild(label);
+
+		if(data.description !== undefined){
+
+			// Generate a tooltip icon
+			const tooltip = document.createElement("button");
+			tooltip.classList.add("tooltip");
+			tooltip.for = name;
+			label.appendChild(tooltip);
+
+			// Along with a dialog with the description
+			const dialog = document.createElement("dialog");
+			dialog.classList.add("tooltip-dialog");
+			dialog.innerText = data.description;
+			label.appendChild(dialog);
+
+			// Make sure you can open the dialog by clicking the tooltip
+			tooltip.addEventListener("click", event => {
+				const dialog = event.target.nextElementSibling;
+				if (dialog.nodeName !== "DIALOG") return;
+
+				dialog.showModal();
+			});
+
+			// Make sure you can close the dialog by pressing anywhere
+			dialog.addEventListener("click", event => {
+				event.preventDefault();
+				const dialog = event.target;
+				if (dialog.nodeName === "DIALOG"){
+					dialog.close("dismiss");
+				}
+			});
+
+		}
 
 		// Then create the control along with any other necessary DOM elements for that control
 		switch (data.type) {
@@ -64,7 +97,7 @@ function generateInputs(inputData, savedState, parent){
 				for (const optionName of data.options) {
 					const option = document.createElement("option");
 					option.value = optionName;
-					option.innerHTML = optionName;
+					option.innerText = optionName;
 					select.appendChild(option);
 				}
 
@@ -143,7 +176,6 @@ function generateInputs(inputData, savedState, parent){
 
 		if(data.setTo !== undefined){
 			const updateButton = document.createElement("button");
-			updateButton.innerHTML = "update";
 			updateButton.classList.add("update");
 			updateButton.dataset.for = name;
 			parent.appendChild(updateButton);
@@ -342,9 +374,9 @@ class Messages{
 			this.domInstance.style.transitionDuration = `${this.transitionTime}ms`;
 
 			const p = document.createElement("p");
-			p.innerHTML = text;
+			p.innerText = text;
 			const button = document.createElement("button");
-			button.innerHTML = "×";
+			button.innerText = "×";
 			button.ariaLabel = "Close this message";
 			button.addEventListener("click", event => {
 				globalThis.messages.remove(event.target.parentElement.dataset.id);
@@ -986,13 +1018,13 @@ playButton.addEventListener("click", event => {
 		// Button was paused, resume playback
 		globalThis.simulationTime.resume();
 		globalThis.timeline.poke(true);
-		button.innerHTML = "Pause";
+		button.innerText = "Pause";
 		button.classList.remove("paused");
 	}else{
 		// Button was playing, pause playback
 		globalThis.simulationTime.pause();
 		globalThis.timeline.poke(true);
-		button.innerHTML = "Play";
+		button.innerText = "Play";
 		button.classList.add("paused");
 		globalThis.urlState.update();
 	}
