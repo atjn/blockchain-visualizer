@@ -1018,13 +1018,11 @@ playButton.addEventListener("click", event => {
 		// Button was paused, resume playback
 		globalThis.simulationTime.resume();
 		globalThis.timeline.poke(true);
-		button.innerText = "Pause";
 		button.classList.remove("paused");
 	}else{
 		// Button was playing, pause playback
 		globalThis.simulationTime.pause();
 		globalThis.timeline.poke(true);
-		button.innerText = "Play";
 		button.classList.add("paused");
 		globalThis.urlState.update();
 	}

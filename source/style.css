@@ -293,6 +293,10 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	background-color: rgb(197 197 197 / 0.158);
 }
 
+#playControls > * {
+	vertical-align: middle;
+}
+
 #controls {
 	background-color: rgb(197 197 197 / 0.158);
 	border-top: 1px solid #FFFFFF;
@@ -345,8 +349,36 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	background-size: contain;
 }
 
+#play {
+	aspect-ratio: 1;
+	height: 25px;
+	border: none;
+	background-color: unset;
+	background-image: url("./images/pause.svg");
+	background-size: contain;
+	cursor: pointer;
+}
+
+#play.paused {
+	background-image: url("./images/play.svg");
+}
+
+#reset {
+	aspect-ratio: 1;
+	height: 25px;
+	border: none;
+	background-color: unset;
+	background-image: url("./images/replay.svg");
+	background-size: contain;
+	cursor: pointer;
+}
+
 #timeline {
 	width: 60vw;
+}
+
+#timeline + output {
+	text-align: right;
 }
 
 footer {
