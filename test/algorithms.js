@@ -30,7 +30,6 @@ for (const file of fs.readdirSync(algorithms_path)) {
 	const { nodeData, sendPackets } = await node.process(packet, globalThis.nodes.get(to));
 
 	tap.ok(addresses.every(address => nodeData.hasAddress(address)), "node has all addresses");
-
 	tap.ok(sendPackets.length > 0, "node is sending outbound packets");
 
 
@@ -49,7 +48,6 @@ for (const file of fs.readdirSync(algorithms_path)) {
 	const { sendPackets: sendNewBlockPackets} = await node.process(newBlockSignal, globalThis.nodes.get(to));
 
 	tap.ok(sendNewBlockPackets.length > 0, "new block is being sent out");
-
 	tap.ok(sendNewBlockPackets.every(block => block instanceof BlockPacket), "outbound packets from new block signal are block packets");
 }
 
