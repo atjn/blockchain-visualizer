@@ -37,13 +37,14 @@
 
 			<div class="front">
 				<p>
-					This project set out to interactively visualize the differences and similarities in different block propagation algorithms to improve the intuitive understanding of blockchains.
-					<br>
-					In the simulation below, it is visualized how new nodes might enter a decentralized network and securely communicate. The simulated network below can expand, shrink, and share information as you seem fit by using the various controls. These controls include blockchain protocols, number of attackers (i.e., nodes with malicious intent), number of nodes and the timescale. Click on any node or connection to read information about that specific element. Hover over controls to read how that control works.
-					<br>
-					The box between the controls and the network will visualize the blockchain and update it, when there are new transactions.
-					<br>
-					Start by pressing “Play”.
+					This project sets out to help people understand discovery- and publishing algorithms in peer-to-peer networks, by creating an interactive visualization of how nodes in these networks communicate with each other.
+					<br><br>
+					You can start by centering the visualization (top right button), and then pressing play (bottom left corner).
+					<br><br>
+					The simulation is controlled by settings that you can see if you press the top left button. The default settings are pretty reasonable and should allow a well functioning algorithm to run properly. You can tweak these settings yourself, in order to challenge the algorithm in different ways.
+					<br><br>
+					Though the simulation might seem random, if settings are kept the same, they yield the same results every time the simulation is run again.
+
 				</p>
 			</div>
 
@@ -82,59 +83,57 @@
 			</div>
 
 			<div class="front">
-				<h2>Why Blockchains?</h2>
+				<h2>Visualization explained</h2>
+				<p>
+					The visualization consists of two parts:
+					<br><br>
+					The upper part is a simulation of a network, where nodes (computers) of the network are represented by circles, and the connections represented by lines between the nodes.
+					The smaller circles that are seen moving along the connections represent packets, which is what the nodes use to communicate with eachother.
+					<br><br>
+					The lower part displays the state of the simulated blockchain. Each block gaining opacity as the trust in it is increased.
+					<br>
+					The blockchain is sometimes seen splitting into multiple branches. This happens when nodes are unable to agree on a unified blockchain. In other words, the algorithm is failing. One or two branches are fine and can often be repaired by the algorithm, but anyhing more than that is catastrophic and renders the blockchain unusable.
+					<br><br>
+					The default settings of the simulation are set to simulate a smaller network, both to allow for a better overview of the events taking place, and for the sake of your poor computer.
+				</p>
+				<h2>Terminology</h2>
+				<p>
+					<b>Network</b>: A network is a collection of machines (computers) that are able to communicate with each other: i.e. send and recieve messages.
+					<br><br>
+					<b>Node</b>: A node is another term for a computer within a network: It can take on the role of being either a server, providing other nodes of a network with specific services or information, or a client, utilizing the services provided by servers of the network.
+					<br><br>
+					<b>Traditional networks</b>: In a traditional network, all services and information is hosted by a few select servers, providing services and information to the rest of the networks user-base on-demand
+					<br><br>
+					<b>Peer-to-peer networks</b>: The way in which a peer-to-peer network differs from a traditional network is, that all nodes within a network now act as both servers of services and information, as well as clients utilizing services and information from other peers. All peers in a peer-to-peer network are on the same level hierarchically.
+					<br><br>
+					As it would be impractical and redundant to store all the information with every single node due to memory-restrictions, each node will usually only store partial amounts of what information is available to the entire network. This does not apply to blockchains, where every node stores the same information is stored on all nodes. In peer-to-peer networks, all services and all information is spread out across all nodes.
+					<br><br>
+					<b>Packet</b>: A packet contains some data, and is what the nodes use to communicate with eachother.
+					<br><br>
+					<b>Blockchain</b>: A blockchain is a relativley new technology, utilizing the ideas behind peer-to-peer networks. All peers in this kind of network keeps a copy of a some public ledger. This ledger usually tracks some asset. In cryptocurrencies, this asset is the amount of cryptovaluta people in the network has to their name.
+					The name comes from the way it could be thought of as a chain of blocks. Each new block containing an updated version of the ledger from the previous block.
+					<br><br>
+					<b>Algorithms</b>: An algorithm is a set of defined instructions made to solve a specific problem.
+					In peer-to-peer networks, this problem would be joining the network as a new node, and maintaining good connections to the rest of the network.
+				</p>
+				<h2>Connection algorithms</h2>
+				<p>
+					In the simulation, there are four different connection algorithms, protocols, that the simulation can be made to follow as the network is simulated.
+					<br><br>
+					<em>Balanced</em>: This algorithm uses sensible defaults for all aspects of operation. It works in most conditions and does not have any obvious defects that can be exploited.
+					<br><br>
+					<em>Bloated</em>: This algorithm uses more resources than it needs to. It connects to too many peers and sends too much data. It technically works, but it wastes massive amounts of resources, and is in larger networks close to impossible to run.
+					<br><br>
+					<em>Naive</em>: This algorithm does not consider that there can be multiple branches of the blockchain. The lack of mechanism to weed out temporary branches means that the blockchain quickly becomes fragmented with mulitple seperate branches that are actively being used. This is problematic, as a user can run the same action multiple times on each seperate branch. If this blockchain was a cryptocurrency, it would allow all users of it to use all of their money multiple times.
+					<br><br>
+					<em>Sparse</em>: This algorithm does not adequately connect to peers of a network. That means that any network structure that is slightly challenging can result in small pockets of nodes, that are not connected to the rest of the network.
+				</p>
+
+				<h2>Why do I need to learn about this technology?</h2>
 				<p>
 					For the purpose of learning about and understanding what a blockchain is, it might be relevant to first ask ourselves why we need to know about this technology. While many people's inclination will be to associate blockchain technology with cryptocurrencies and specifically with Bitcoin it is important to understand that this technology and its applications extend much further. It is a form of public asset-management system which can find usage in a wide range of research fields and industries. To name some, these include finance, healthcare, real estate, media, government, travel and retail. It is easy to see that this technology does not simply belong in the field of computer science, but that it is relevant to future modern society on a broad scope. Note that the term 'future' is used here, as this technology is still relatively new and unexplored within several fields and industries. However, it remains the expectation that blochchain technology will at some point be fully implemented and deployed in a cross-section of industry sectors imperative to the functioning of modern society.
 					<br><br>
 					Different fields will have different needs, and while the software developers might be the ones implementing the blockchain into these fields, a collaborate effort across roles from within a company will remain vital. This is to ensure that the company’s specific needs are met. A common basis of technical terms will prove invaluable for the facilitation of ideas across roles to be communicated. As a result of this, students of business, math, finance among others may benefit hugely from at least a basic understanding of blochchain technology, as to best leverage the possibilities of this exciting new technology geared towards their specific field of study.
-				</p>
-				<h2>Basic Terminology</h2>
-				<p>
-					For us to dive into the topic of blockchain technology, we will also have to establish a common ground of technical terms. These include networks and nodes. A network is simply a collection of machines (computers) able to communicate with each other: i.e. send and receive messages internally within the network. A node is a computer within a network: It can take on the role of being either a server providing the other nodes of the network with specific services or a client utilizing the services provided by the servers to accomplish different tasks.
-					<br><br>
-					Now that we understand some of this basic terminology, we will discover what a peer-to-peer network is. In a traditional network services and information is hosted on a few select servers, providing all of this to the rest of the networks potentially quite large user-base on-demand. The way in which a peer-to-peer network differs from a traditional network is that all the nodes within the network now act as both server and client. These server/clients are called peers as they are all places on the same level hierarchically, as both the user and provider of services within the network. As it would be impractical and redundant to store all the information on every single node due to memory-restrictions, while also ruining the fundamental idea of having a network in the first place, each node will probably only store partial information of what would be found on a server in a traditional network. This way the services and data are spread out across all nodes. When a node is made aware of some new data it will announce this, at which point other peers may request this data to save it locally, ensuring that multiple peers are aware of and storing the data.
-					<br><br>
-					A node on the peer-to-peer network not storing some particular data that it needs will have to retrieve this data from some other peer or possibly multiple peers, as it may not be able to find one single peer storing all the data needed. Therefore, the peer will have to ask the peers that it is aware of whether they have this bit of data, and if so request them to share it. On the other hand, if none of the peers that the peer requesting the data are storing that data locally, they in turn will have to ask the peers that they are aware of whether they hold that bit of data, and if so send a request for retrieval of the data. It will then be passed on down to the original peer requesting the data.
-					<br><br>
-					This method of redistributing data over a network holds several key advantages over traditional networks. As several peers are likely to store the same data, the data will likely still be available to the other peers, should one or more of the peers go offline. This minimizes the impact of these downtimes. It also minimizes the load on nodes storing specific data that becomes highly requested, as multiple peers will be available for retrieval of the data, thus spreading the network load. The decentralization of data is also a big plus as to the verification and correctness of the data. Even if the data is tampered with and falsified from one place, there will in all likelihood exist other conflicting instances of that data somewhere on the network. This fact can be used for designing verification processes letting the network reach a consensus on what instance of data is the correct one.
-				</p>
-				<h2>What is a Blockchain?</h2>
-				<p>
-					Now that the foundations for understanding a peer-to-peer network have been laid we can start exploring what a blockchain actually is and how it works. A blockchain is a way of utilizing the ideas behind peer-to-peer networks to publicly follow the chain of custody of some asset. This asset could for example be money, although it does not have to be. But by just thinking of these assets as being money for the moment, you can also equate the blockchain as being some publicly known communal ledger, keeping track of who owns who money within a group of people.
-					<br><br>
-					Remember how you have just learnt that in a peer-to-peer each peer will probably only store some or partial information? This is the exception. In a blockchain all the peers store the exact same data divided into linearly ordered blocks of data. Each block contains a number of verified asset-transactions. In order to verify the chain of custody of said asset it is important that information be kept on the order in which these blocks are added to the blockchain, and that the peers agree on this order.
-					<br><br>
-					Periodically as new incoming transactions are verified and then clumped together in blocks, this block will be added to the very end of the locally stored current version of the blockchain by some peer administered the privilege to do so. This updated version of the blockchain is then communicated and verified on individual basis throughout the entirety of the interconnected peers on the network before they too add them to their locally stored version of the blockchain.
-					<br><br>
-					This essentially means that the governance of the blockchain and the assets within are handed over to the users, making it a fair, decentralized and democratic system, which is of course one of its greatest advantages. Some people fear that this can be a huge detriment as well, as people will undoubtedly try to commit fraud and thus can not be trusted with self-governance. This is of course true, but since each peer can be made to verify blocks on an individual level, highly secure implementations of blockchain technology can be developed.
-				</p>
-				<h2>Blockchain Components</h2>
-				<p>
-					Let's dive a bit further into the subject of blockchain by looking at some specifics of a blockchain technology, namely Bitcoin. The Bitcoin network is a blockchain facilitating the transaction of the cryptocurrency Bitcoin; that is, the Bitcoin is a payment system based on blockchain technology. But the Bitcoin network is not just comprised of one single functionality. For the Bitcoins networks implementation there several distinct and necessary functionalities for it to work properly. These can be categorically separated by dividing them into modules.
-					<br><br>
-					Even though the nodes within the network should be considered peers as they have equal right, each node may only contain certain modules based on what it is trying to accomplish within the network. A node can be comprised of the following modules:
-				</p>
-				<ul>
-					<li>The network module: All nodes within the Bitcoin Network are comprised of this module. Its role is for the peer to discover other peers, for it to maintain connections with other peers, for it to individually verify and propagate transactions to other peers and lastly for it to verify and propagate blocks to other peers.</li>
-					<li>The wallet module: The purpose of this module is to store information about a peers assets, transaction history, and two keys called a public key and a private key (or secure key) respectively. The private key is used to digitally sign outgoing transactions, and the public key is there for other peers to verify that the transaction is indeed signed by the owner of the wallet holding the associated private key.</li>
-					<li>The mining module: This module is used as an incentive for peers to correctly collect transactions into blocks. For Bitcoin, peers do this by running specialized computer hardware designed to solve complex problems. By doing this, they have proven that a great amount of computing power has been put into solving the problem correctly, ensuring trust from the other peers. By solving the problem first, they are granted permission to add the block that they have collected to the blockchain, and a fee is awarded to them for their work in securely adding the next block.</li>
-				</ul>
-				<p>
-					These are the basic modules of the Bitcoin network, although they could be broken up further, into sub-modules, and other modules do exist on the extended Bitcoin network. An example of one of the modules extending the functionality of the Bitcoin network is mine pooling modules, which allow for miners to pool together and collectively try and solve the problem before anyone else does, then splitting the income from the fee awarded to them. These extended modules are reached by connecting to special nodes on the network enabling these functionalities to be run.
-				</p>
-				<h2>What is an Algorithm?</h2>
-				<p>
-					We are about to explain the workings of specific algorithms of the Bitcoin network in further detail, but to ensure that everybody is still on the same page, we must first explain what exactly an algorithm is. Simply put and algorithms is just a mathematical step or series of steps that have been clearly defined and proven to work in deriving a specific result from some data-input. If you were to program a computer to derive at the square root of some unspecified number that the user of the program will input at some later time, a set of clearly defined instructions could be written, such that no matter the input (assuming that it makes sense for the operation) we would always derive the square root of said number. These instructions could be considered the algorithms for finding the square root of a positive number.
-				</p>
-				<h2>Specific examples</h2>
-				<p>
-					Lastly, we will now be describing two specific algorithms to the Bitcoin network in further detail. These are the peer-to-peer and the data propagation algorithms. In blockchain technology the problem of how to join the network presents itself. This is the domain of the peer-to-peer algorithm. To join a blockchain network you will have to know of at least one peer in the network, that you can connect to, for you to establish the necessary multiple connections with different peers within the network. Otherwise, you will not be able to publish, request or receive any data.
-					<br><br>
-					There exists multiple ways of joining the Bitcoin network. One way which is frequently used in newer programs connecting a new peer to the network is by connecting the peer to the DNS-address of stable and long-running connections. If the program fails to successfully connect the new peer with a DNS-address it can resort to providing it with a hard-coded IP-address. This is a last-ditch effort by the program, as to try and minimize the load on those hard-coded IP-addresses.
-					<br><br>
-					Once a peer has connected to the network it will need to maintain its list of peers. This is done by associating the addresses of these peers with timestamps, which expresses how much time has gone by since that peer has last sent a message. Only timestamps older than 20 minutes will be saved. This is again done to minimize the workload on certain peers. To gather new IP-addresses which can be referenced to join the network in the future, a peer will send a message getaddr, which is a function requesting its peers to send back addresses of other peers no older than 3 hours, which are then saved in a local file.
-					<br><br>
-					The problem of how new data is propagated throughout the network belongs to the realm of the data propagation algorithm. The reason the word problem is used here, is because a poorly designed system could have data end up looping around the network forever, clogging up the network. Fast and effective propagation of new data should be a priority to avoid branches in the blockchain, which can occur when multiple peers solve the problem before the first solution has been spread to the entire network. The way the Bitcoin network has resolved this issue is by assigning each block a unique identifier, which is just a block header, containing the hash of the previous block. When a peer receives new information, it can then in turn ask its connected peers if they already know this information. If not, they will receive a request back for access to that information (block).
 				</p>
 			</div>
 		</main>
