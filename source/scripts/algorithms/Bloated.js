@@ -1,15 +1,9 @@
 /**
  * @file
- * Check the description below.
+ * Check the description in the UI to see what is unique about this algorithm.
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
-
-export const description =
-`
-This algorithm uses more resources than it needs to. It connects to too many peers and sends too much data.
-It technically works, but it wastes massive amounts of resources, and in a large enough network, that makes it practically impossible to run.
-`;
 
 /**
  * Takes a special input object with the node's local storage, along with a new

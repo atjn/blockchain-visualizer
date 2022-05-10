@@ -1,6 +1,6 @@
 /**
  * @file
- * Currently, this file only registers the servicerworker.
+ * Currently, this file only registers the serviceworker.
  */
 
 //isProduction is changed by the build script when building for production

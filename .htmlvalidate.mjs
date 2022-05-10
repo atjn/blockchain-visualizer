@@ -11,7 +11,4 @@ export default {
 		"@atjn/htmlvalidate-config",
 	],
 
-	rules: {
-	},
-
 };

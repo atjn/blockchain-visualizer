@@ -1,41 +1,45 @@
 /**
  * @file
- * This file is the main handler for all UI elements in the app. Most of the direct changes to DOM elements should happen in this file.
- * All of the underlying simulation functionality of the app is imported into this file from other files.
+ * This file is the main handler for all UI elements in the app, most of the direct changes
+ * to DOM elements should happen in this file.
+ * All of the underlying simulation functionality of the app is imported into this file
+ * from other files.
  */
 
 import { Simulation, SimulationTime, EventDispatcher, EventDrawer } from "./simulationHandlers.js";
+import { hash } from "./utilities.js";
 import controls from "./controls.js";
 
 /**.
- * This is a JSON representation of all the different inputs that the simulation requires.
- * These are build and added to the app on load with `generateInputs()`, and can be changed live if need be.
- *
- * When a value is changed, it is saved to `globalThis.settings`. Here is an example of what it looks like:
+ * This contains all the settings that the user can change in the UI. Here is an example
+ * of what that can look like:
  *
  *	globalThis.settings: {
+ *  	aspectRatio: 2,
+ * 		seed: 1337,
  * 		network: {
- * 			algorithms: "Bitcoin",
- * 			nodes: 25,
+ * 			algorithms: "Balanced",
+ * 			nodes: 15,
  * 			...
  * 		},
- * 		seed: 3554,
  * 		...
  *	}
  *
+ * All possible settings are defined in the `controls.js` file.
  */
-
 globalThis.settings = {};
 
 /**
- * Generates all input elements for the simulation, based on the variable `controls` defined above.
+ * Generates all input elements for the simulation, based on the `controls` defined in the `controls.js` file.
  *
  * @param {object} inputData - Description of the input elements to generate.
- * @param savedState
- * @param {object} parent - The element to put the input elements inside of.
+ * @param {object} savedState - An object representing any settings that have been restored from the URL.
+ * @param {object} parent - The HTML element to put the input elements inside of.
  */
 function generateInputs(inputData, savedState, parent){
 	settingsReset(true);
+
+	// For each control/setting:
 	for (const [name, data] of Object.entries(inputData)) {
 
 		// Create a label for the control
@@ -44,6 +48,7 @@ function generateInputs(inputData, savedState, parent){
 		label.for = name;
 		parent.appendChild(label);
 
+		// If a description is defined, make it available for the user.
 		if(data.description !== undefined){
 
 			// Generate a tooltip icon
@@ -176,6 +181,7 @@ function generateInputs(inputData, savedState, parent){
 
 		}
 
+		// Add a "reset" button to certain elements to make it easier for the user to restore to default settings.
 		if(["select", "range", "number"].includes(data.type)){
 			const updateButton = document.createElement("button");
 			updateButton.title = "Reset this value";
@@ -184,6 +190,8 @@ function generateInputs(inputData, savedState, parent){
 			updateButton.dataset.for = name;
 			parent.appendChild(updateButton);
 
+			// Register an event listener that can find the default valie in `controls.js`
+			// and restore the control to that value.
 			updateButton.addEventListener("click", async event => {
 				const button = event.target;
 				let { controlsMetaScope } = findScopeFromDom(button);
@@ -207,41 +215,19 @@ function generateInputs(inputData, savedState, parent){
 	/**
 	 * This functon should be called on every control element being added to the UI.
 	 *
-	 * When the user updates a setting with one of the controls,
-	 * this function makes sure the change is ported to the `globalThis.settings` object.
+	 * When the user updates a setting with one of the controls, this function makes
+	 * sure the change is also updated to the `globalThis.settings` object.
 	 *
-	 * If the control value is shown in an `<output>` field in the DOM, then that is also updated by this function.
+	 * If the control value is shown in an `<output>` field in the DOM, then that is
+	 * also updated by this function.
 	 *
-	 * @param {object} element - Control element to listen to.
+	 * @param {object} element - HTML control element to listen to.
 	 */
 	function appendDataReader(element){
 		element.addEventListener("input", async event => {
 			const element = event.target;
 
 			const { settingsScope } = findScopeFromDom(element);
-
-			/**
-			 * At this point, we are left with the desired settings object structure. In the case of the above example, the object looks like:
-			 *
-			 * 	globalThis.settings: {
-			 * 		network: {
-			 * 			connection: {
-			 * 				...
-			 *			}.
-						...
-			 * 		}.
-			 * 		...
-			 * 	}.
-			 *
-			 * All the "..." just represent that there could maybe already be information in these objects that we don't know about / don't care about.
-			 *
-			 * The `settingsScope` now points to `globalThis.settings.network.connection`, so now we are ready to actually add the control value to the object.
-			 */
-
-
-			/**
-			 * Here comes the important part of the function.
-			 */
 
 			// Update to the new value in `globalThis.settings`.
 			if(element.type === "checkbox"){
@@ -264,7 +250,11 @@ function generateInputs(inputData, savedState, parent){
 	}
 
 	/**
-	 * @param element
+	 * Finds the scope for an HTML control element.
+	 *
+	 * @param {object} element - The control element to find the scope for.
+	 *
+	 * @returns {object} - Object scopes for the `settings` object and the `controls.js` definition.
 	 */
 	function findScopeFromDom(element){
 
@@ -310,12 +300,37 @@ function generateInputs(inputData, savedState, parent){
 
 		}
 
+		/**
+		 * At this point, we are left with the desired settings object structure. In the case of the above example, the object looks like:
+		 *
+		 * 	globalThis.settings: {
+		 * 		network: {
+		 * 			connection: {
+		 * 				...
+		 *			}.
+		 *  		...
+		 * 		}.
+		 * 		...
+		 * 	}.
+		 *
+		 * All the "..." just represent that there could maybe already be information in these objects that we don't know about / don't care about.
+		 *
+		 * The `settingsScope` now points to `globalThis.settings.network.connection`, so now we are ready to actually add the control value to the object.
+		 */
+
 		return { settingsScope, controlsMetaScope };
 
 	}
 
 	/**
-	 * @param force
+	 * This is called when the user has changed some of the controls, and the simulation should
+	 * prepare to be reset. In most cases, the function will wait a small amount of time before
+	 * resetting the simulation.
+	 * This is useful because otherwise, the simulation would reset every single time a small
+	 * change has been made (could be several times a second), and spend lots of CPU cycles
+	 * (some of them blocking) to simulate the new settings, just to be immediately terminated.
+	 *
+	 * @param {boolean} force - If set to true, will immediately reset the simulation without waiting first.
 	 */
 	function settingsReset(force = false){
 		const resetDelay = 1000;
@@ -337,14 +352,33 @@ function generateInputs(inputData, savedState, parent){
 globalThis.lastSettingsChange = 0;
 globalThis.nextSettingsReset = 0;
 
+/**
+ * Represents all error/info messages that are shown at the top of the screen to the user.
+ */
 class Messages{
-	#rollingId = 0n;
+
+	// A map of all currently active messages.
+	#messages = new Map();
+
+	/**
+	 * Creates a new ID for a new message.
+	 *
+	 * @returns {bigint} - The ID.
+	 */
 	#newId(){
 		this.#rollingId += 1n;
 		return String(this.#rollingId);
 	}
-	#messages = new Map();
-	get m(){return this.#messages;}
+	#rollingId = 0n;
+
+	/**
+	 * Generates a new message.
+	 *
+	 * @param {object} param0 - An object containing the settings for this message.
+	 * @param {string} param0.type - The type of message (info|warning|error).
+	 * @param {string} param0.text - The text to write in the message.
+	 * @param {string} param0.time - The amount of time to wait before auto-dismissing the message.
+	 */
 	new({type = "info", text, time = 15000}){
 		const id = this.#newId();
 		const newMessage = new this.#Message(id, {type, text});
@@ -356,6 +390,12 @@ class Messages{
 		this.#messages.set(id, newMessage);
 		setTimeout(id => globalThis.messages.remove(id), time, id);
 	}
+
+	/**
+	 * Removes an message that is currently shown on the page.
+	 *
+	 * @param {bigint} id - The ID of the message to remove.
+	 */
 	remove(id){
 		const oldMessage = this.#messages.get(id);
 		if(!oldMessage) return;
@@ -366,7 +406,22 @@ class Messages{
 		oldMessage.domInstance.style.opacity = 0;
 		setTimeout(oldMessage => oldMessage.domInstance.remove(), oldMessage.transitionTime * 2, oldMessage);
 	}
+
+	/**
+	 * Represents a single HTML message.
+	 */
 	#Message = class{
+
+		/**
+		 * Generates a single new message and adds it to the HTML DOM.
+		 *
+		 * @param {bigint} id - The ID that this message is assigned.
+		 * @param {object} param1 - The settings object for the message.
+		 * @param {number} param1.top - How far from the top the message should be shown (to make room for other messages).
+		 * @param {object} param1.type - The type of message (info|warning|error).
+		 * @param {object} param1.text - The text to write in the message.
+		 *
+		 */
 		constructor(id, {top = 0, type, text}){
 			this.domInstance = document.createElement("div");
 			this.id = id;
@@ -390,6 +445,15 @@ class Messages{
 
 		}
 
+		// How long should it take for the open/close transitions.
+		transitionTime = 200;
+
+		// Which unit is used to size the messages.
+		verticalUnit = "vh";
+
+		// The HTML DOM object for this specific message.
+		domInstance;
+
 		#id;
 		get id(){
 			return this.#id;
@@ -398,9 +462,7 @@ class Messages{
 			this.#id = value;
 			this.domInstance.dataset.id = value;
 		}
-		domInstance;
-		transitionTime = 200;
-		verticalUnit = "vh";
+
 		#height;
 		get height(){
 			return this.#height;
@@ -409,6 +471,7 @@ class Messages{
 			this.#height = value;
 			this.domInstance.style.setProperty("--height", `${this.height}${this.verticalUnit}`);
 		}
+
 		#top;
 		get top(){
 			return this.#top;
@@ -420,14 +483,39 @@ class Messages{
 	};
 }
 
+/**
+ * Represents the settings that have been saved in the URL.
+ *
+ * When the user changes any settings, they are saved to the URL. This allows the
+ * user to copy the URL and send it to a friend that can then fully repeat the same
+ * simulation. It also means that a refresh of the app doesn't reset the settings.
+ *
+ * To prevent the URL from becomming extremely long, the values are encoded with as
+ * few characters as possible. Their values are also not based on their names,
+ * but their position in the list of controls.
+ * Numeric values are encoded as base 36, and strings just use a short hash.
+ * We have essentially made a small compression format for the controls.
+ *
+ * Right now, the settings can only be read between apps that have the exact same
+ * settings layout. If some new settings are added, then all old URLs become invalid.
+ * This should probably be fixed in a future version, but it will result in a longer URL.
+ */
 class URLState{
+
+	/**
+	 * Sets up the URLState handler and generates a settings object that restores the
+	 * settings that are currently saved in the URL.
+	 *
+	 * @param {object} settings - The settings defined in `controls.js`.
+	 */
 	constructor(settings){
 		this.#versionHash = this.#generateVersionHash(settings);
 		this.#restoreSettings(controls, {});
 
 		this.#finished = new Promise(resolve => {
 			/**
-			 *
+			 * This is a bit of a hack. It just checks whether the url state is
+			 * finished every 300ms. When it is, it resolves the promise.
 			 */
 			function check(){
 				if(
@@ -442,32 +530,19 @@ class URLState{
 		});
 
 	}
-	#finished;
-	get finished(){
-		return this.#finished;
-	}
-	#restoredSettings;
-	get restoredSettings(){
-		return this.#restoredSettings;
-	}
-	#restoredTime;
-	get restoredTime(){
-		return this.#restoredTime;
-	}
 
-	#stateLayoutVersion = 1;
-
-	#versionHashLength = 4;
-	#versionHash;
-
-	#settingsSeparators = {
-		skip: "-",
-		number: ".",
-		string: "~",
-		boolean: "!",
-	};
-	#settingStringHashLength = 3;
-
+	/**
+	 * Generates a version hash for this specific set of settings/controls
+	 * and this specific way to decode/encode the URL.
+	 * This is used to test whether the existing encoded URL used the same
+	 * setup of settings and encoder. If the version hash in the existing
+	 * URL is different, then we know that it won't be possible to decode
+	 * it. Otherwise, we know that decoding should work perfectly.
+	 *
+	 * @param {object} settings - The controls setup from `controls.js`.
+	 * @param {boolean} recursiveCall - Whether or not it is called by itself as part of a recursive call.
+	 * @returns {string} - The computed version hash.
+	 */
 	async #generateVersionHash(settings, recursiveCall = false){
 
 		let seed = "";
@@ -486,7 +561,86 @@ class URLState{
 		}
 
 	}
-	#skipsToDo = 0;
+
+	// A promise that resolves when the handler is set up and has restored the settings in the URL.
+	#finished;
+	get finished(){
+		return this.#finished;
+	}
+
+	// A settings object representing the settings that was stored in the URL.
+	#restoredSettings;
+	get restoredSettings(){
+		return this.#restoredSettings;
+	}
+
+	// The timestamp to set the simulation to (from the encoded URL)
+	#restoredTime;
+	get restoredTime(){
+		return this.#restoredTime;
+	}
+
+	// If something about how the settings are encoded in the URL gets changed,
+	// then update this number to invalidate older versions of the URL that uses
+	// the now unsupported encoding.
+	#stateLayoutVersion = 1;
+
+	// How amny characters the version hash should use.
+	#versionHashLength = 4;
+
+	// The computed version hash for this exact set of settings/controls and this exact URL decoder/encoder.
+	#versionHash;
+
+	// Which operators to use for the different types of values that can be encoded.
+	#settingsSeparators = {
+		skip: "-",
+		number: ".",
+		string: "~",
+		boolean: "!",
+	};
+
+	// How many characters the hash for a string value should use.
+	#settingStringHashLength = 3;
+
+	// Tiemstamp of the last time the URL was updated.
+	#lastUpdate = 0;
+	get lastUpdate(){
+		return this.#lastUpdate;
+	}
+
+	// How often the URL should be updated to reflect a new timeline timestamp.
+	#timelineUpdateFrequency = 2000;
+	get timelineUpdateFrequency(){
+		return this.#timelineUpdateFrequency;
+	}
+
+	/**
+	 * Updates the URL to reflect any settings that might have been changed in the project.
+	 */
+	async update(){
+		this.#lastUpdate = Date.now();
+		const state = encodeURIComponent(await this.#generateState(controls, globalThis.settings));
+		const hash = encodeURIComponent(await this.#versionHash);
+		const now = encodeURIComponent(Math.round(globalThis.simulationTime.now / 100).toString(36));
+		history.replaceState(
+			null,
+			"",
+			`?s=${hash}${this.#settingsSeparators.number}${now}${state}`,
+		);
+	}
+
+	/**
+	 * Generates a `settings` object based on the settings that were already encoded in the URL
+	 * when the app was started.
+	 *
+	 * @param {object} settingsMeta - The settings object from `controls.js`.
+	 * @param {object} param1 - Settings that the function uses when it needs to call itself recursively.
+	 * @param {boolen} param1.recursiveCall - True if this is a recursive call.
+	 * @param {string} param1.buffer - The part of the URL to decode.
+	 * @param {number} param1.cursor - Which character in the URL that is currently being decoded.
+	 *
+	 * @returns {void|object} - Only used for recursive results. Otherwise the result is saved in `restoredSettings`.
+	 */
 	async #restoreSettings(settingsMeta, { recursiveCall = false, buffer, cursor = 0 }){
 		const restoredSettings = {};
 
@@ -593,27 +747,17 @@ class URLState{
 		}
 
 	}
+	#skipsToDo = 0;
 
-	#lastUpdate = 0;
-	get lastUpdate(){
-		return this.#lastUpdate;
-	}
-	#timelineUpdateFrequency = 2000;
-	get timelineUpdateFrequency(){
-		return this.#timelineUpdateFrequency;
-	}
-	async update(){
-		this.#lastUpdate = Date.now();
-		const state = encodeURIComponent(await this.#generateState(controls, globalThis.settings));
-		const hash = encodeURIComponent(await this.#versionHash);
-		const now = encodeURIComponent(Math.round(globalThis.simulationTime.now / 100).toString(36));
-		history.replaceState(
-			null,
-			"",
-			`?s=${hash}${this.#settingsSeparators.number}${now}${state}`,
-		);
-	}
-
+	/**
+	 * Encodes a new URL based on the current settings.
+	 *
+	 * @param {object} settingsMeta - The settings setup from `controls.js`.
+	 * @param {object} settingsValues - The current values of all settings.
+	 * @param {boolean} recursiveCall - True if this is a recursive call.
+	 *
+	 * @returns {string|any[]} - The final string to indert in the URL (in a recursive call, an array of the values found).
+	 */
 	async #generateState(settingsMeta, settingsValues, recursiveCall = false){
 		const state = [];
 
@@ -675,7 +819,17 @@ class URLState{
 	}
 }
 
+/**
+ * Represents the timeline that shows the user how for into the simulation they are.
+ * It also gives them access to skip around in the simulation.
+ *
+ * It is tightly integrated with the play/pause/reset buttons.
+ */
 class Timeline{
+
+	/**
+	 * Connects to the timeline HTML element and registers the necessary event listeners.
+	 */
 	constructor(){
 		this.#DOMElement = document.getElementById("timeline");
 
@@ -700,19 +854,39 @@ class Timeline{
 
 	}
 
+	// How often the timeline should be updated to reflect the real amount of time elapsed.
+	// It would be excessive to update this every millisecond, and would make the UI
+	// unresponsive, therefore it only happens once in a while.
+	// Defined in milliseconds.
 	#updateDelay = 400;
+
+	// Timestamp for the last time the timeline was updated to reflect the real amount of time elapsed.
 	#lastTimelineUpdate = 0;
+
+	// The value of the elsaped time and max time, as it was the last time the timeline was updated.
 	#last = {
 		max: 0,
 		value: 0,
 	};
+
+	// Reference to the HTML DOM element for the timeline.
 	#DOMElement;
 
 
 	#userInputFreeze = 1700;
 
+	// Timestamp for the last time the user skipped around in the timeline.
 	#lastUserInput = 0;
 
+	/**
+	 * When the user starts dragging the timeline, it should stop updating itself with the current
+	 * timestamp, and instead let the user drag the slider wherever they want.
+	 * Whe have two booleans to describe that state called `userControlled` and `frozen`.
+	 * `userControlled` becomes false as soon as the user stops dragging the timeline.
+	 * `frozen` does not become false until it has waited a small amount of time to make sure that
+	 * the user is completely done dragging the timeline.
+	 * Only when `frozen` becomes false, does the timeline start updating again.
+	 */
 	#internal_frozen = false;
 	#internal_simulationTimeWasPausedBeforeFreeze = false;
 	get #frozen(){
@@ -728,7 +902,6 @@ class Timeline{
 			if(!this.#internal_simulationTimeWasPausedBeforeFreeze) globalThis.simulationTime.resume();
 		}
 	}
-
 	#internal_userControlled = false;
 	get #userControlled(){
 		return this.#internal_userControlled;
@@ -743,6 +916,13 @@ class Timeline{
 		}
 	}
 
+	/**
+	 * Calculates the max amount of time shown in the timeline.
+	 * It should always be a little more than the current elapsed time,
+	 * to allow the user to skip forward in the simulation.
+	 *
+	 * @returns {number} - The max amount of time in milliseconds.
+	 */
 	get #max(){
 		return Math.max(
 			5000,
@@ -751,12 +931,19 @@ class Timeline{
 		);
 	}
 
+	/**
+	 * Updates the timeline output in the DOM with new values for elapsed/max time.
+	 */
 	#updateDOMOutput(){
 
 		this.#DOMElement.nextElementSibling.value = `${readable(globalThis.simulationTime.now)} / ${readable(this.#DOMElement.max)}`;
 
 		/**
-		 * @param time
+		 * Takes an amount of time and converts it to an easily readable format.
+		 *
+		 * @param {number} time - The amount of time in milliseconds.
+		 *
+		 * @returns {string} - A human readable version of that amount of time.
 		 */
 		function readable(time){
 
@@ -784,8 +971,14 @@ class Timeline{
 		}
 	}
 
-	#running = false;
-	#lastPoke = 0;
+	/**
+	 * This is what keeps the timeline running and self-updating. If the simulaiton has been paused
+	 * and is now starting again, other functions can call this to make sure that the timeline wakes
+	 * up and starts updating. As long as the simulation is running, this function will call itself
+	 * in short intervals to keep the timeline updated.
+	 *
+	 * @param {boolean} forceUpdate - If true, will always update the timeline, even though it was just updated a few milliseconds ago.
+	 */
 	async poke(forceUpdate = false){
 		const ranAt = Date.now();
 		this.#lastPoke = ranAt;
@@ -827,7 +1020,8 @@ class Timeline{
 		};
 		this.#running = false;
 	}
-
+	#running = false;
+	#lastPoke = 0;
 
 }
 
@@ -835,7 +1029,7 @@ class Timeline{
  * When called, resets the entire simulation as if the app had just been opened.
  * This is mostly useful when the user has changed some settings and the simulation should run again from the start.
  *
- * @param full
+ * @param {boolean} full - If false, does a "soft reset" which reloads the UI, but not the underlying simulation.
  */
 export function resetSimulation(full = true){
 	if(full){
@@ -848,7 +1042,7 @@ export function resetSimulation(full = true){
 	document.querySelector("#visualizer .network").innerHTML = "";
 	document.querySelector("#visualizer .blockchain > .aspect-reset").innerHTML = "";
 
-	// Set the correct aspect ratio for the simulatio network
+	// Set the correct aspect ratio for the simulation network
 	document.querySelector("#visualizer .network").style.setProperty("--aspect-ratio", globalThis.settings.aspectRatio);
 
 	if(full){
@@ -865,7 +1059,10 @@ export function resetSimulation(full = true){
 }
 
 /**
- * @param state
+ * If the user has decided to acivate "nerd info", then this function will run on an interval
+ * to update the info boxes, showing what is going on in the underlying simulation.
+ *
+ * @param {object} state - Data passed on from the last call to `showNerdInfo`.
  */
 async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, lastOrderUpdate: 0, lastOrder: true}){
 	const nerdInfo = document.getElementById("nerd-info");
@@ -955,18 +1152,23 @@ async function showNerdInfo(state = {lastEventUpdate: 0, lastEventLength: 0, las
 }
 
 /**
- * @param data
+ * Logs a message to the "nerd info" box, which can be enabled to debug the simulation.
+ *
+ * @param {object} data - Data about the message.
+ * @param {string} data.message - The message that describes the event.
+ * @param {string} data.severity - The severity of the message (info|warning|error).
+ * @param {number} data.timestamp - The timestamp for when the event happened.
  */
-export async function logMessage(data){
+export async function logMessage({message, severity, timestamp}){
 	if(globalThis.settings.nerdInfo === false) return;
 	const nerdLog = document.getElementById("nerd-log");
 	const log = document.createElement("output");
-	log.value = data.message;
-	log.dataset.severity = data.severity;
-	log.dataset.timestamp = data.timestamp;
+	log.value = message;
+	log.dataset.severity = severity;
+	log.dataset.timestamp = timestamp;
 	nerdLog.insertBefore(log, nerdLog.firstChild);
 
-	if(data.severity === "error"){
+	if(severity === "error"){
 		globalThis.messages.new({
 			type: "error",
 			text: "Sorry, there was an error in the simulation. This probably means the simulation won't work as intended.",
@@ -975,7 +1177,8 @@ export async function logMessage(data){
 }
 
 /**
- *
+ * Highlights messages in the "nerd info" box that are relevant to the specific
+ * time in the visualization that is currently being shown to the user.
  */
 export async function highlightLogs(){
 	if(globalThis.settings.simulation?.nerdInfo === false) return;
@@ -997,20 +1200,6 @@ export async function highlightLogs(){
 }
 
 /**
- * @param string
- * @param length
- */
-async function hash(string, length){
-	const encoder = new TextEncoder();
-
-	const buffer = encoder.encode(string).buffer;
-	const hash = (await crypto.subtle.digest("sha-1", buffer)).slice(0, length);
-	const textHash = Array.from(new Uint8Array(hash)).map(number => number.toString(36).at(-1)).join("");
-
-	return textHash;
-}
-
-/**
  * This eventlistener handles when the user clicks on the play button.
  * It can both pause and resume the simulation.
  */
@@ -1020,22 +1209,36 @@ playButton.addEventListener("click", event => {
 
 	if(button.classList.contains("paused")){
 		// Button was paused, resume playback
+
+		// Make sure everything in the UI is aware that something is happening
 		globalThis.simulationTime.resume();
 		globalThis.timeline.poke(true);
+		globalThis.urlState.update();
+
+		// Change the apperance of the button to now be a "pause button"
 		button.title = "Pause simulation";
 		button.ariaLabel = "Pause simulation";
 		button.classList.remove("paused");
 	}else{
 		// Button was playing, pause playback
+
+		// Make sure everything in the UI is aware that something is happening
 		globalThis.simulationTime.pause();
 		globalThis.timeline.poke(true);
+		globalThis.urlState.update();
+
+		// Change the apperance of the button to now be a "play button"
 		button.title = "Play simulation";
 		button.ariaLabel = "Play simulation";
 		button.classList.add("paused");
-		globalThis.urlState.update();
 	}
 });
 
+/**
+ * This event listener handles when the user clicks on the reset button in the timeline.
+ * The reset button sets the simulation timeline back to 0 and pauses the simulation.
+ * It is slightly faster than manually dragging the timeline back.
+ */
 const resetButton = document.getElementById("reset");
 resetButton.addEventListener("click", () => {
 
@@ -1068,23 +1271,22 @@ generateInputs(controls, globalThis.urlState.restoredSettings, document.getEleme
 
 
 
-
+// Append an event listener to the settings button to open/close the settings/controls pane.
 const showAndHideButton = document.querySelector("#controls-pane > .toggle");
-
 showAndHideButton.addEventListener("click", () => {
 	const controlsPane = document.getElementById("controls-pane");
 
 	controlsPane.classList.toggle("open");
-
 });
 
-const visualizer = document.getElementById("visualizer");
-
+// Append an event listener to the "vertical align" button that centers the visualization on screen.
 const verticalAlignButton = document.getElementById("vertical-align");
+const visualizer = document.getElementById("visualizer");
 verticalAlignButton.addEventListener("click", () => {
 	visualizer.scrollIntoView({behavior: "smooth"});
 });
 
+// Add an event listener that only shows the "vertical align" button when the visualization is not already perfectly aligned.
 window.addEventListener(
 	"scroll",
 	async () => {

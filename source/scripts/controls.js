@@ -1,3 +1,24 @@
+
+/**
+ * @file
+ * This is a JavaScript object representation of all the different inputs that the simulation requires.
+ * These are build and added to the app on load with `generateInputs()` in the `ui.js` file.
+ *
+ * When a value is changed, it is saved to `globalThis.settings`. Here is an example of what it looks like:
+ *
+ *	globalThis.settings: {
+ *  	aspectRatio: 2,
+ * 		seed: 1337,
+ * 		network: {
+ * 			algorithms: "Balanced",
+ * 			nodes: 15,
+ * 			...
+ * 		},
+ * 		...
+ *	}.
+ *
+ */
+
 export default {
 	aspectRatio: {
 		type: "number",

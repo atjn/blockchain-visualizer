@@ -1,15 +1,9 @@
 /**
  * @file
- * Check the description below.
+ * Check the description in the UI to see what is unique about this algorithm.
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
-
-export const description =
-`
-This algorithm uses sensible defaults for all aspects of operation.
-It works in most conditions and does not have any obvious defects that can be exploited.
-`;
 
 /**
  * Takes a special input object with the node's local storage, along with a new
