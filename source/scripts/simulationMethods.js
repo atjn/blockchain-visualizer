@@ -7,7 +7,7 @@ import { NodeData, sendDrawEvent } from "./nodeMethods.js";
  * Node data is saved here, until a `NodeProcess` with a specific address runs, in which case the data
  * for that address is taken out, and then later delivered back when the `NodeProcess` has altered it.
  */
- export class Nodes extends Map{
+export class Nodes extends Map{
 
 	create(){
 		const newNode = new NodeData();
