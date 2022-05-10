@@ -176,7 +176,7 @@ function generateInputs(inputData, savedState, parent){
 
 		}
 
-		if(data.setTo !== undefined){
+		if(["select", "range", "number"].includes(data.type)){
 			const updateButton = document.createElement("button");
 			updateButton.title = "Reset this value";
 			updateButton.ariaLabel = "Reset this value";
@@ -186,16 +186,16 @@ function generateInputs(inputData, savedState, parent){
 
 			updateButton.addEventListener("click", async event => {
 				const button = event.target;
-				const { controlsMetaScope } = findScopeFromDom(button);
+				let { controlsMetaScope } = findScopeFromDom(button);
+				if(controlsMetaScope.type === "box") controlsMetaScope = controlsMetaScope.children;
+				const controlsEntry = controlsMetaScope[button.dataset.for];
 
 				let input = button;
 				while(input.id !== button.dataset.for){
 					input = input.previousElementSibling;
 				}
 
-				input.value = controlsMetaScope.type === "box" ?
-					controlsMetaScope.children[button.dataset.for].setTo() :
-					controlsMetaScope[button.dataset.for].setTo();
+				input.value = controlsEntry.setTo?.() ?? controlsEntry.default;
 				input.dispatchEvent(new InputEvent("input"));
 
 			});

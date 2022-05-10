@@ -1,6 +1,22 @@
+#
+# This test is automatically run on each new commit.
+# It simply activates the `npm test` command, and makes sure
+# that all tests pass. If the tests do not pass, then
+# the commit is not allowed to be merged into the main branch.
+#
+# The `npm test` command uses static scans to make sure that
+# the code follows a high quality of standard, and also runs
+# unit tests and checks that the app can be build from source
+# without errors.
+# Check out the `package.json` file to see exactly what
+# the command does.
+#
 name: Test
 
 on: [push]
+
+# This test runs on a remote server, so we need to do a lot of
+# low-level preparation before we can run the NPM test.
 
 jobs:
 
@@ -9,25 +25,32 @@ jobs:
 
     strategy:
       fail-fast: false
+      # Which Node and OS version should the test run on?
       matrix:
         node-version: [18.x]
         os: [ubuntu-latest]
 
     steps:
 
+        # Copy the code from the GitHub repo and save it in a local folder
       - name: Checkout code
         uses: actions/checkout@v2
 
+        # Download and install Node
       - name: Set up Node ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
 
+        # This enables caching of some internal NPM files, which can speed up the install process
       - name: Use npm cache
         uses: actions/cache@v2
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
 
+        # We dont need to run `npm install`, as that is already done as part of `npm test`
+
+        # Run the tests
       - name: Test code quality
         run: npm test
