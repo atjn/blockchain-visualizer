@@ -1,15 +1,9 @@
 /**
  * @file
- * Check the description below.
+ * Check the description in the UI to see what is unique about this algorithm.
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
-
-export const description =
-`
-This algorithm does not adequately connect to its peers.
-That means any network structure that is slightly challenging can result in small pockets of nodes that are not connected t the rest of the network.
-`;
 
 /**
  * Takes a special input object with the node's local storage, along with a new

@@ -18,7 +18,7 @@
  * whereas the UI events are strictly designed to tell the UI what to draw on the screen, and when.
  */
 
-import { Packet, AddressPacket, sendDrawEvent, random, NewBlockSignal, BlockChain, sendErrorEvent, sendLogEvent } from "./nodeMethods.js";
+import { AddressPacket, sendDrawEvent, random, NewBlockSignal, BlockChain, sendErrorEvent, sendLogEvent } from "./nodeMethods.js";
 import { average, clampMin } from "./utilities.js";
 import { Nodes } from "./simulationMethods.js";
 

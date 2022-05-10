@@ -22,8 +22,28 @@ export function clampMin(minimum, maximum, ...numbers){
  *
  * @param  {...number} numbers - The list of numbers to find the average of.
  *
- * @returns {number} - The avreage of the list of numbers.
+ * @returns {number} - The average of the list of numbers.
  */
 export function average(...numbers){
 	return numbers.reduce((accumulated, next) => accumulated + next, 0) / numbers.length;
+}
+
+/**
+ * Generates a custom length hash based on the contents of a text string.
+ *
+ * Uses the SHA-1 algorithm, which is not cryptographically safe.
+ *
+ * @param {string} string - The string to hash.
+ * @param {number} length - The length of the generated hash.
+ *
+ * @returns {string} - The hash.
+ */
+export async function hash(string, length){
+	const encoder = new TextEncoder();
+
+	const buffer = encoder.encode(string).buffer;
+	const hash = (await crypto.subtle.digest("sha-1", buffer)).slice(0, length);
+	const textHash = Array.from(new Uint8Array(hash)).map(number => number.toString(36).at(-1)).join("");
+
+	return textHash;
 }

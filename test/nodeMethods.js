@@ -104,57 +104,7 @@ tap.test("BlockChain", async () => {
 
 
 		});
-/*
-		tap.test("should always add a new unbased block, despite many branches", async() => {
-
-			const blockchain = new BlockChain({});
-			let previousBlocks = [new Block()];
-
-			for(let i = 0; i < 5; i++){
-
-				for(const previousBlock of previousBlocks){
-
-					const newBlock = new Block(previousBlock.id);
-
-					blockchain.add(newBlock);
-
-					tap.ok(blockchain.has(newBlock), "has the block that was just added");
-
-					previousBlocks.push(newBlock);
-
-				}
-
-			}
-
-
-		});*/
 
 	});
-
-	/*
-	tap.test("entries", async () => {
-
-		const testChains = generateTestChains();
-		for(const testChain of testChains){
-			for(const { chainIndexes, chain, localIndex, block } of testChain.entries()){
-
-				tap.ok(chainIndexes, "chainIndexes is defined");
-				tap.ok(chain, "chain is defined");
-				tap.ok(localIndex !== undefined, "localIndex is defined");
-				tap.ok(block, "block is defined");
-
-				tap.equal(chain[localIndex]?.localId, block.localId, "block is correctly placed in local chain");
-
-				let scope = chain;
-				for(const index of chainIndexes){
-					scope = scope[index];
-				}
-				tap.equal(scope[localIndex]?.localId, block.localId, "block is correctly placed in global chain");
-
-			}
-		}
-
-	});
-	*/
 
 });

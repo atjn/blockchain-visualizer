@@ -15,4 +15,9 @@ module.exports = {
 		"@atjn/eslint-config",
 	],
 
+  rules: {
+    // Was very hard to follow and also doesn't really matter for this project
+	  "jsdoc/no-undefined-types": "off",
+  }
+
 };

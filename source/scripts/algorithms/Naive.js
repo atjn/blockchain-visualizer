@@ -1,15 +1,9 @@
 /**
  * @file
- * Check the description below.
+ * Check the description in the UI to see what is unique about this algorithm.
  */
 
 import { AddressPacket, BlockPacket, Block, NewBlockSignal, distance, PeerData } from "../nodeMethods.js";
-
-export const description =
-`
-This algorithm does not consider that there can be multiple branches of the blockchain.
-The lack of a mechanism to weed out temporary branches, means the blockchain quickly becomes messy and hard to use.
-`;
 
 /**
  * Takes a special input object with the node's local storage, along with a new
