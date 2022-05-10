@@ -265,13 +265,15 @@ function newAddress(){
  * @param data
  */
 export function sendDrawEvent(data){
-	return postMessage({
-		...{
-			timestamp: globalThis.timestamp,
-			active: true,
-		},
-		...data,
-	});
+	if ("postMessage" in globalThis) {
+		return postMessage({
+			...{
+				timestamp: globalThis.timestamp,
+				active: true,
+			},
+			...data,
+		});
+	}
 }
 
 /**
