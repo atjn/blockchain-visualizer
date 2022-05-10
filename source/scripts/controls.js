@@ -39,7 +39,7 @@ export default {
 				max: 30,
 				default: 10,
 				description: "How many nodes the simulation maximum can consist of",
-				label:"Max nodes",
+				label: "Max nodes",
 			},
 			delay: {
 				type: "range",
@@ -77,7 +77,7 @@ export default {
 				max: 10,
 				default: 5,
 				description: "How many nodes are added to the network everytime the network adds new nodes. In other words; how many nodes the simulation adds",
-				label:"Nodes added",
+				label: "Nodes added",
 			},
 		},
 	},
