@@ -15,7 +15,7 @@
  *
  * The internal event queue is not the same as the events this simulation sends to the UI.
  * The internal queue denote the actual data that is being sent between nodes,
- * whereas the UI events are strictly designed to tell the UI what to draw on the screen, and when.
+ * whereas the UI events are strictly designed to tell the UI what and when to draw on the screen.
  */
 
 import { AddressPacket, sendDrawEvent, random, NewBlockSignal, BlockChain, sendErrorEvent, sendLogEvent } from "./nodeMethods.js";
@@ -155,6 +155,7 @@ class EventQueue{
 				}
 
 				try{
+					// Update the color of the node based on the ends of its current blockchain.
 					const colors = nodeData.blockchain.getEnds().map(block => {
 						const { chain } = nodeData.blockchain.find(block);
 						let trust = 0;
@@ -188,7 +189,11 @@ class EventQueue{
 		this.#dequeueing = false;
 	}
 
-	#lastAllBlocks = new Map();
+	/**
+	 * This function runs every time a node has altered its blockchain. It creates a federated blockchain
+	 * that contains all the blocks in all the other nodes, and then compares it to the previous
+	 * federated blockchain. If there were any changes, they are sent to the UI thread to be drawn.
+	 */
 	#handleBlockchainEvents(){
 		const events = [];
 
@@ -210,11 +215,15 @@ class EventQueue{
 			}
 		}
 
+		/**
+		 * Check if the beginning of the blockchain contains blocks that are completely trusted.
+		 * If yes, then remove them from the entire simulation. They are not interesting anymore
+		 * and just eat up memory and processing resources.
+		 */
 		let trustedIndex = 0;
-		while(trustedIndex < globalChain.blocks.length && globalChain.blocks[trustedIndex].trust === 1){
+		while(globalChain.blocks[trustedIndex]?.trust === 1){
 			trustedIndex++;
 		}
-
 		if(trustedIndex > 0){
 			const blocksToTrim = globalChain.blocks.slice(0, trustedIndex + 1);
 			sendLogEvent(`Trim fully trusted block${blocksToTrim.slice(0, -1).length > 1 ? "s" : ""} ${new Intl.ListFormat("en-US", { style: "long", type: "conjunction" }).format(blocksToTrim.slice(0, -1).map(block => block.id))}`);
@@ -229,10 +238,17 @@ class EventQueue{
 		defineBlockPosition(globalChain, allBlocks, blockSizes);
 
 		/**
-		 * @param chain
-		 * @param allBlocks
-		 * @param blockSizes
-		 * @param scope
+		 * Tries to create a unique string for each specific block, which is used to detect the
+		 * difference between the same block being moved somewhere else, and a block being removed,
+		 * while a new block is added somewhere else.
+		 *
+		 * This is still experimental and doesn't really work the way it should. When it works, it
+		 * should allow the UI to animate blocks moving around in the federated blockchain.
+		 *
+		 * @param {BlockChain} chain - The chain to define block positions on.
+		 * @param {Map<string, Block>} allBlocks - The map where unique block positions are saved, and points to the block.
+		 * @param {number[]} blockSizes - The size of each block within the UI. They get smaller as more branches are added.
+		 * @param {object} scope - Some information passed to the function when it is a recursive call.
 		 */
 		function defineBlockPosition(chain, allBlocks, blockSizes, scope = {top: 0, height: 100, left: 0}){
 
@@ -270,7 +286,6 @@ class EventQueue{
 			allBlocks.set(key, block);
 		}
 
-		//console.log([...new Set([...allBlocks.keys(), ...this.#lastAllBlocks.keys()])]);
 		for(const key of [...new Set([...allBlocks.keys(), ...this.#lastAllBlocks.keys()])]){
 			const oldBlock = this.#lastAllBlocks.get(key);
 			const newBlock = allBlocks.get(key);
@@ -319,6 +334,7 @@ class EventQueue{
 
 		this.#lastAllBlocks = allBlocks;
 	}
+	#lastAllBlocks = new Map();
 }
 
 /**
@@ -440,7 +456,12 @@ async function addNodes(){
 }
 
 /**
- *
+ * This function is responsible for adding new blocks to the network. It replaces the consensus mechanism
+ * that real networks use.
+ * The new block is simply given to a completely random node. This is usually also what real consensus
+ * mechanisms strive to do, although there are exceptions.
+ * When the function runs, it adds itself back to te event queue with a delay, ensuring that the new blocks
+ * continue to show up indefinitely.
  */
 function newBlock(){
 	const nodeAddresses = [...globalThis.nodes.keys()];
