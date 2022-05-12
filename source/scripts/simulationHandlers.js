@@ -7,17 +7,17 @@
  * but is also used to handle the realtime playback of the simulation on the UI thread.
  */
 
+import { resetSimulation, logMessage, highlightLogs } from "./ui.js";
+
 /**
  * Represents the simulation, which is running in a separate Worker.
- * When the class is constructed, it automatically starts a Worker thread and passes the appropriate settings to it.
+ * When the class is constructed, it automatically starts a Worker thread and passes the current settings to it.
  */
-
-import { resetSimulation, logMessage, highlightLogs } from "./ui.js";
 export class Simulation extends Worker{
 
 	/**
 	 * Represents the simulation, which is running in a separate Worker.
-	 * When the class is constructed, it automatically starts a Worker thread and passes the appropriate settings to it.
+	 * When the class is constructed, it automatically starts a Worker thread and passes the current settings to it.
 	 */
 	constructor(){
 
@@ -26,9 +26,12 @@ export class Simulation extends Worker{
 
 		/**
 		 * This function handles all messages that are returned from the simulation.
-		 * The simulation only responds with draw events.
+		 * The simulation can send different types of message by changing the `type` field.
 		 *
-		 * @param {object} event - The draw event.
+		 * Currently, it can either send "log" type messages or default draw messages.
+		 * Draw messages tells the UI thread exactly what to draw on screen.
+		 *
+		 * @param {object} event - The event for the message.
 		 */
 		this.addEventListener("message", event => {
 
@@ -42,7 +45,7 @@ export class Simulation extends Worker{
 				// Save the draw event to the global event array.
 				globalThis.events.push(event.data);
 
-				// Pause the simulation if the returned draw event is too far in the future.
+				// Pause the simulation if the returned draw event is too far into the future.
 				if(event.data.timestamp > globalThis.simulationTime.now + this.#bufferTime.max) this.pause();
 			}
 
@@ -67,7 +70,7 @@ export class Simulation extends Worker{
 	 * The real simulation runs very fast, and can quickly be creating events that are several
 	 * minutes ahead of the realtime simulation being displayed to the user.
 	 *
-	 * Therefore, in order to save CPU cycles, `bifferTime.max` tells the simulation that when
+	 * Therefore, in order to save CPU cycles, `bufferTime.max` tells the simulation that when
 	 * it starts creating events that are more than `bufferTime.max` milliseconds ahead of the
 	 * current realime playback, it should pause the simulation.
 	 * `bufferTime.min` is the point at which the simulation should start again, because we are
@@ -136,9 +139,11 @@ export class SimulationTime{
 	}
 
 	/**
-	 * Resets the simulation time to 0 and pauses it.
+	 * Resets the simulation time and pauses it.
+	 * By default, the time is reset to 0, but it can be reset to a different
+	 * value if one is passed to the function.
 	 *
-	 * @param time
+	 * @param {number} time - The time to set the simulation time to, in milliseconds.
 	 */
 	reset(time = 0){
 		this.#paused = true;
@@ -200,7 +205,15 @@ export class SimulationTime{
 		}
 	}
 
+	/**
+	 * Sets the current timestamp of the realtime simulation playback.
+	 *
+	 * @param {number} value - The timestamp that the simulation time should be set to, in milliseconds.
+	 */
 	set now(value){
+
+		// If the new timestamp is before the current, then the
+		// simulation requires a soft reset
 		const reset = Boolean(value < this.now);
 
 		const realNow = Date.now();
@@ -226,7 +239,7 @@ export class EventDispatcher{
 		this.reset();
 	}
 
-	// The index in the vent list, of the next event to be dispatched. All elements before this index have already been dispatched.
+	// The index in the event list, of the next event to be dispatched. All elements before this index have already been dispatched.
 	#nextEvent = 0;
 
 	/**
@@ -431,6 +444,11 @@ export class EventDrawer{
 		}
 	}
 
+	/**
+	 * This function is called to take a UI chain update event and create the actual DOM elements displayed on screen, according to the event.
+	 *
+	 * @param {object} event - The chain update event.
+	 */
 	#updateChain(event){
 
 		this.#chainBox.style.setProperty("--block-size", `${event.blockSize}%`);
