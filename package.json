@@ -1,7 +1,7 @@
 {
   "name": "blockchain-visualizer",
   "version": "1.0.0",
-  "description": "TODO",
+  "description": "Helping people understand discovery- and publishing algorithms in peer-to-peer networks through an interactive visualization of nodes in a blockchain.",
   "main": "index.js",
   "type": "module",
   "scripts": {
