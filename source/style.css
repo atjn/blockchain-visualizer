@@ -41,6 +41,11 @@ h1 {
 	text-align: center;
 }
 
+a {
+	color: rgb(255 255 255);
+	text-decoration: none;
+}
+
 .content {
 	flex: 1 1 0;
 	padding: 2rem;
@@ -383,6 +388,11 @@ footer {
 	align-items: center;
 	justify-content: center;
 	height: 10vh;
+}
+
+footer img {
+	width: 3em;
+	margin-left: 2em;
 }
 
 #vertical-align {
