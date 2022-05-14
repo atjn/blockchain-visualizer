@@ -385,6 +385,15 @@ footer {
 	align-items: center;
 	justify-content: center;
 	height: 10vh;
+	flex-direction: column;
+}
+
+footer a{
+	color: white;
+}
+
+footer p{
+	margin: 0;
 }
 
 #vertical-align {
@@ -475,3 +484,4 @@ body.visualization-in-focus #vertical-align {
 #controls-pane.open > .toggle:hover > svg {
 	transform: rotate(210deg);
 }
+
