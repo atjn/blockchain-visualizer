@@ -13,7 +13,7 @@
 #
 name: Test
 
-on: [push]
+on: [push, pull_request]
 
 # This test runs on a remote server, so we need to do a lot of
 # low-level preparation before we can run the NPM test.
