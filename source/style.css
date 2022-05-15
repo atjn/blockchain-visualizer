@@ -474,6 +474,6 @@ body.visualization-in-focus #vertical-align {
 }
 
 #controls-pane #controls {
-	overflow-y: scroll;
+	overflow-y: auto;
 	height: 100%;
 }
