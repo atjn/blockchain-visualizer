@@ -43,7 +43,6 @@ h1 {
 
 a {
 	color: rgb(255 255 255);
-	text-decoration: none;
 }
 
 .content {
@@ -385,14 +384,10 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 footer {
 	background-color: #9494943B;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	height: 10vh;
-}
-
-footer img {
-	width: 3em;
-	margin-left: 2em;
+	height: 15vh;
 }
 
 #vertical-align {
