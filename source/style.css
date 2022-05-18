@@ -438,7 +438,6 @@ body.visualization-in-focus #vertical-align {
 	transition-property: left, box-shadow;
 	transition-timing-function: ease-out;
 	transition-duration: .3s;
-
 }
 
 #controls-pane.open {
@@ -477,4 +476,9 @@ body.visualization-in-focus #vertical-align {
 }
 #controls-pane.open > .toggle:hover > svg {
 	transform: rotate(210deg);
+}
+
+#controls-pane #controls {
+	overflow-y: auto;
+	height: 100%;
 }
