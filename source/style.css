@@ -186,6 +186,7 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	bottom: 0;
 	padding: 1vh;
 	background-color: rgb(197 197 197 / 0.158);
+	display: flex;
 }
 
 #playControls > * {
@@ -217,7 +218,7 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 }
 
 #timeline {
-	width: 60vw;
+	flex-grow: 1;
 }
 
 #visualizer {
@@ -233,13 +234,11 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 
 #visualizer > div {
 	border: 1px solid #FFFFFF;
-	position: absolute;
 	left: 0;
 	width: 100%;
 }
 
 #visualizer .network-container {
-	top: 2%;
 	height: 65%;
 	overflow: hidden;
 }
@@ -307,6 +306,7 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	background-color: rgb(119 119 119);
 	overflow-x: auto;
 	overflow-y: hidden;
+	margin: 13px 0;
 }
 
 #visualizer .blockchain > .aspect-reset {
