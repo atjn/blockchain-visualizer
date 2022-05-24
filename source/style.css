@@ -224,6 +224,7 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 #visualizer {
 	position: relative;
 	margin: 3vh auto;
+	padding-top: 2vh;
 	height: 98vh;
 	width: 96%;
 }
@@ -306,7 +307,7 @@ body.nerd-info :is(#nerd-info, #nerd-log) {
 	background-color: rgb(119 119 119);
 	overflow-x: auto;
 	overflow-y: hidden;
-	margin: 13px 0;
+	margin: 1vh 0;
 }
 
 #visualizer .blockchain > .aspect-reset {
