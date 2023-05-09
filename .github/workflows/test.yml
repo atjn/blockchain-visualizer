@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       # Which Node and OS version should the test run on?
       matrix:
-        node-version: [18.x]
+        node-version: [20.x]
         os: [ubuntu-latest]
 
     steps:
