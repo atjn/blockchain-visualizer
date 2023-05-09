@@ -1,10 +1,7 @@
 
 import tap from "tap";
 
-import { webcrypto } from "crypto";
 import { Block, BlockChain } from "../source/scripts/nodeMethods.js"
-
-globalThis.crypto = webcrypto;
 
 globalThis.settings = {
 	seed: 1,

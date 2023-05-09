@@ -33,15 +33,15 @@
   },
   "homepage": "https://github.com/atjn/blockchain-visualizer#readme",
   "devDependencies": {
-    "@atjn/eslint-config": "^5.0.0",
-    "@atjn/htmlvalidate-config": "^5.0.0",
+    "@atjn/eslint-config": "^7.1.0",
+    "@atjn/htmlvalidate-config": "^6.0.0",
     "@atjn/stylelint-config": "^3.0.0",
-    "eslint": "^8.15.0",
-    "folder-hash": "^4.0.2",
-    "fs-extra": "^10.1.0",
-    "html-validate": "^7.0.0",
+    "eslint": "^8.40.0",
+    "folder-hash": "^4.0.4",
+    "fs-extra": "^11.1.1",
+    "html-validate": "^7.16.0",
     "minify": "^8.0.4",
     "stylelint": "^14.8.2",
-    "tap": "^16.2.0"
+    "tap": "^16.3.4"
   }
 }

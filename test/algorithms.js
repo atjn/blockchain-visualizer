@@ -5,9 +5,6 @@ import { fileURLToPath } from "url";
 const site_root = path.join(path.dirname(fileURLToPath(import.meta.url)), "../");
 const algorithms_path = path.join(site_root, "source/scripts/algorithms");
 
-import { webcrypto } from "crypto";
-globalThis.crypto = webcrypto;
-
 import { AddressPacket, Block, BlockPacket, NewBlockSignal } from "../source/scripts/nodeMethods.js";
 import { Nodes } from "../source/scripts/simulationMethods.js";
 
